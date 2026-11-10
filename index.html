@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Песня на карте — онлайн</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+html,body{margin:0;background:#f6f4ef;color:#1d1d1b;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1100px;margin:0 auto;padding:14px}
+h1{font-size:20px;margin:0 0 8px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.sc{background:#fff;border-radius:10px;padding:6px 12px;font-weight:600}
+button{font:inherit;background:#1d1d1b;color:#fff;border:0;border-radius:10px;padding:9px 16px;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+button.alt{background:#fff;color:#1d1d1b;border:1px solid #ccc}
+.card{background:#fff;border-radius:12px;padding:16px;max-width:480px}
+input,select{font:inherit;padding:8px 10px;border:1px solid #ccc;border-radius:8px}
+#map{height:60vh;min-height:360px;border-radius:10px;background:#a9cde6;cursor:crosshair}
+.leaflet-container{background:#a9cde6;font:inherit}
+.leaflet-container path:focus,.leaflet-interactive:focus{outline:none}
+.leaflet-tooltip.cap{background:none;border:0;box-shadow:none;font-size:11px;color:#222;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;padding:0}
+.leaflet-tooltip-right.cap:before{display:none}
+.cn{width:0;height:0}
+.cn span{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:11px;font-weight:600;letter-spacing:.04em;color:#4a4636;opacity:.85;text-shadow:0 0 3px #fff,0 0 3px #fff}
+.msg{margin:10px 0;min-height:44px;line-height:1.6}
+[hidden]{display:none!important}
+</style></head><body><main>
+<h1>🎵 Песня на карте — онлайн</h1>
+
+<section id="home" class="card">
+<p style="margin-top:0">Ваше имя:<br><input id="name" maxlength="16" placeholder="Имя"></p>
+<div class="bar"><button id="create">Создать комнату</button></div>
+<p>или войти по коду:</p>
+<div class="bar"><input id="code" maxlength="4" placeholder="Код" style="width:90px;text-transform:uppercase"><button id="join">Войти</button></div>
+<p id="hmsg" style="min-height:22px"></p>
+</section>
+
+<section id="lobby" class="card" hidden>
+<div class="bar">Код комнаты: <b id="rc" style="font-size:28px;letter-spacing:.1em"></b> <button id="copy" class="alt">Скопировать ссылку</button></div>
+<div style="font-weight:600;margin:8px 0">Игроки</div>
+<div class="bar" id="plist"></div>
+<div id="hostopts">
+<p>Раундов: <select id="rounds"><option>3</option><option selected>5</option><option>8</option><option>10</option><option>15</option></select>
+&nbsp; Таймер раунда: <select id="timer"><option value="0">нет</option><option value="30">30 с</option><option value="60" selected>60 с</option><option value="90">90 с</option></select></p>
+<p id="info" style="font-size:13px;opacity:.75"></p>
+<button id="start">Начать игру</button>
+</div>
+<p id="wait" hidden>Ждём, пока хост начнёт игру…</p>
+<p><button id="leave" class="alt">Выйти</button></p>
+</section>
+
+<section id="game" hidden>
+<div class="bar" id="scores"></div>
+<div class="bar"><span id="rd"></span><span id="timerTxt"></span><span id="status"></span></div>
+<div class="bar"><button id="play" disabled>Загрузка…</button><label>🔊 <input type="range" id="vol" min="0" max="100" value="70"></label><button id="confirm" disabled>Подтвердить ответ</button></div>
+<div id="map"></div>
+<div class="msg" id="msg"></div>
+<button id="next" hidden></button> <button id="quit" class="alt">Выйти из игры</button>
+<p style="font-size:12px;opacity:.7">Колёсико мыши — масштаб, перетаскивание — сдвиг. Поставьте точку (её можно передвинуть) и нажмите «Подтвердить ответ». Очки: 5000·e^(−расстояние/1500 км).</p>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+var S=[["Sweet Home Alabama","Lynyrd Skynyrd","Алабама",32.8,-86.8],["Empire State of Mind","Jay-Z","Нью-Йорк",40.7,-74],["California Gurls","Katy Perry","Калифорния",36.8,-119.4],["Waterloo","ABBA","Ватерлоо, Бельгия",50.7,4.4],["Africa","Toto","Килиманджаро, Танзания",-3.1,37.4],["Back in the U.S.S.R.","The Beatles","Москва",55.75,37.6],["La Isla Bonita","Madonna","Сан-Педро, Белиз",17.9,-88],["Rio","Duran Duran","Рио-де-Жанейро",-22.9,-43.2],["Down Under","Men at Work","Австралия",-25.3,133.8],["Take Me Home, Country Roads","John Denver","Западная Виргиния",38.6,-80.6],["Barcelona","Freddie Mercury","Барселона",41.4,2.2],["Istanbul (Not Constantinople)","They Might Be Giants","Стамбул",41,29],["Walking in Memphis","Marc Cohn","Мемфис",35.15,-90],["One Night in Bangkok","Murray Head","Бангкок",13.75,100.5],["Mull of Kintyre","Wings","Малл-оф-Кинтайр, Шотландия",55.3,-5.8],["Vienna","Ultravox","Вена",48.2,16.4],["Viva Las Vegas","Elvis Presley","Лас-Вегас",36.2,-115.1],["Kingston Town","UB40","Кингстон, Ямайка",18,-76.8],["Gangnam Style","PSY","Каннам, Сеул",37.5,127],["Havana","Camila Cabello","Гавана, Куба",23.1,-82.4],["Despacito","Luis Fonsi","Пуэрто-Рико",18.5,-66.1,["fonsi"]],["Galway Girl","Ed Sheeran","Голуэй, Ирландия",53.3,-9.05],["Hawái","Maluma","Гавайи",20.8,-156.3],["Medellín","Madonna","Медельин, Колумбия",6.24,-75.58],["Paris","The Chainsmokers","Париж",48.86,2.35],["Lost in Japan","Shawn Mendes","Япония",36.2,138.3],["Tokyo Drift (Fast & Furious)","Teriyaki Boyz","Токио",35.7,139.7],["Владивосток 2000","Мумий Тролль","Владивосток",43.1,131.9,["мумий","mumiy"]],["Солнце Монако","Люся Чеботина","Монако",43.74,7.42,["чеботина","chebotina"]],["Beverly Hills","Zivert","Беверли-Хиллз, Лос-Анджелес",34.07,-118.4,["zivert","зиверт"]],["Расея","Любэ","Россия",61.5,95,["любэ","lube"]],["Прованс","Ёлка","Прованс, Франция",43.9,5.9,["ёлка","елка","yolka"]],["New York, New York","Frank Sinatra","Нью-Йорк",40.7,-74],["Chicago","Frank Sinatra","Чикаго",41.9,-87.6],["I Left My Heart in San Francisco","Tony Bennett","Сан-Франциско",37.77,-122.42],["Georgia on My Mind","Ray Charles","Джорджия, США",32.7,-83.4],["Detroit Rock City","KISS","Детройт",42.3,-83.05],["Born in the U.S.A.","Bruce Springsteen","США",39.8,-98.6,["springsteen"]],["California Dreamin'","The Mamas & the Papas","Калифорния",36.8,-119.4,["mamas"]],["Galveston","Glen Campbell","Галвестон, Техас",29.3,-94.8],["Rocky Mountain High","John Denver","Колорадо",39,-105.5],["L.A. Woman","The Doors","Лос-Анджелес",34.05,-118.24,["doors"]],["Straight Outta Compton","N.W.A","Комптон, Калифорния",33.9,-118.2],["Miami","Will Smith","Майами",25.76,-80.19],["Philadelphia Freedom","Elton John","Филадельфия",39.95,-75.17],["The Girl from Ipanema","Stan Getz","Ипанема, Рио-де-Жанейро",-22.98,-43.2],["Copacabana","Barry Manilow","Копакабана, Рио-де-Жанейро",-22.97,-43.18],["Don't Cry for Me Argentina","Madonna","Аргентина (Буэнос-Айрес)",-34.6,-58.4],["Jamaica Farewell","Harry Belafonte","Ямайка",18.1,-77.3],["Panama","Van Halen","Панама",8.5,-80,["van halen"]],["El Condor Pasa","Simon & Garfunkel","Перу",-9.2,-75,["simon"]],["Streets of London","Ralph McTell","Лондон",51.5,-0.12],["London Calling","The Clash","Лондон",51.5,-0.12,["clash"]],["Waterloo Sunset","The Kinks","Лондон",51.5,-0.11,["kinks"]],["Penny Lane","The Beatles","Ливерпуль",53.4,-2.97,["beatles"]],["Caledonia","Dougie MacLean","Шотландия",56.5,-4.2,["maclean"]],["Les Champs-Élysées","Joe Dassin","Париж",48.87,2.31,["dassin"]],["Nantes","Barbara","Нант, Франция",47.2,-1.55,["barbara"]],["Moskau","Dschinghis Khan","Москва",55.75,37.6,["dschinghis"]],["Budapest","George Ezra","Будапешт",47.5,19.04,["ezra"]],["Wonderful Copenhagen","Danny Kaye","Копенгаген",55.68,12.57,["kaye"]],["Lisbon Antigua","Nat King Cole","Лиссабон",38.72,-9.14,["nat king cole"]],["Granada","Frank Sinatra","Гранада, Испания",37.18,-3.6],["Arrivederci Roma","Dean Martin","Рим",41.9,12.5,["dean martin"]],["Napule è","Pino Daniele","Неаполь",40.85,14.27,["daniele"]],["Hong Kong Garden","Siouxsie and the Banshees","Гонконг",22.3,114.17,["siouxsie"]],["Manila","Hotdog","Манила",14.6,121,["hotdog"]],["Kathmandu","Bob Seger","Катманду",27.7,85.3,["seger"]],["Walk Like an Egyptian","The Bangles","Египет",26.8,30.8,["bangles"]],["Johannesburg","Gil Scott-Heron","Йоханнесбург",-26.2,28.04,["scott-heron","gil scott"]],["Marrakesh Express","Crosby, Stills & Nash","Марракеш",31.63,-8,["crosby"]],["Casablanca","Bertie Higgins","Касабланка",33.57,-7.59,["bertie"]],["Zanzibar","Billy Joel","Занзибар",-6.17,39.2,["joel"]],["Boston","Augustana","Бостон",42.36,-71.06,["augustana"]],["Allentown","Billy Joel","Аллентаун, Пенсильвания",40.6,-75.47,["joel"]],["Не валяй дурака, Америка","Любэ","США",39.8,-98.6,["любэ","lube"]],["Владимирский централ","Михаил Круг","Владимир",56.13,40.41,["круг","krug"]],["Гуд бай, Америка","Наутилус Помпилиус","США",39.8,-98.6,["наутилус","nautilus"]],["Беловежская пуща","Песняры","Беловежская пуща, Беларусь",52.7,23.9,["песняры","pesniary","pesnyary"]],["Atlantic City","Bruce Springsteen","Атлантик-Сити",39.36,-74.42,["springsteen"]],["Streets of Philadelphia","Bruce Springsteen","Филадельфия",39.95,-75.17,["springsteen"]],["Baker Street","Gerry Rafferty","Лондон",51.52,-0.16],["The Rocky Road to Dublin","The Dubliners","Дублин",53.35,-6.26,["dubliners"]],["Fairytale of New York","The Pogues","Нью-Йорк",40.7,-74,["pogues"]],["Englishman in New York","Sting","Нью-Йорк",40.7,-74],["Chattanooga Choo Choo","Glenn Miller","Чаттануга, Теннесси",35.05,-85.31,["miller"]],["Sweet Home Chicago","The Blues Brothers","Чикаго",41.88,-87.63,["blues brothers"]],["California Love","2Pac","Калифорния",36.8,-119.4,["2pac","tupac"]],["Californication","Red Hot Chili Peppers","Калифорния",36.8,-119.4,["red hot"]],["Welcome to New York","Taylor Swift","Нью-Йорк",40.7,-74],["Venice Bitch","Lana Del Rey","Венис, Лос-Анджелес",33.99,-118.47,["lana"]],["Pompeii","Bastille","Помпеи, Италия",40.75,14.49],["Trenchtown Rock","Bob Marley","Тренчтаун, Кингстон",17.98,-76.82,["marley"]],["Vienna Calling","Falco","Вена",48.2,16.4],["Wind of Change","Scorpions","Москва",55.73,37.6],["Moskau","Rammstein","Москва",55.75,37.6],["Deutschland","Rammstein","Германия",51.2,10.4],["Amerika","Rammstein","США",39.8,-98.6],["Stalingrad","Sabaton","Сталинград (Волгоград)",48.7,44.5],["Kashmir","Led Zeppelin","Кашмир",34.1,74.8,["led zeppelin"]],["Take It Easy","Eagles","Уинслоу, Аризона",35.02,-110.7],["Folsom Prison Blues","Johnny Cash","Фолсом, Калифорния",38.67,-121.17,["cash"]],["By the Rivers of Babylon","Boney M.","Вавилон, Ирак",32.54,44.42,["boney"]],["Jerusalema","Master KG","Иерусалим",31.77,35.21,["master kg"]],["Cleveland Rocks","Ian Hunter","Кливленд",41.5,-81.7,["hunter"]],["Kentucky Rain","Elvis Presley","Кентукки",37.8,-85.7],["No Sleep till Brooklyn","Beastie Boys","Бруклин, Нью-Йорк",40.65,-73.95,["beastie"]],["Lasciatemi cantare (L'italiano)","Toto Cutugno","Италия",42.8,12.5,["cutugno"]],["Sous le ciel de Paris","Édith Piaf","Париж",48.86,2.35,["piaf"]],["La Bohème","Charles Aznavour","Монмартр, Париж",48.886,2.34,["aznavour"]],["NUEVAYoL","Bad Bunny","Нью-Йорк",40.7,-74,["bad bunny"]],["В Питере — пить","Ленинград","Санкт-Петербург",59.93,30.34,["ленинград","leningrad"]],["Я уеду жить в Лондон","Григорий Лепс","Лондон",51.5,-0.12,["лепс","leps"]],["Улан-Удэ","ХЛЕБ","Улан-Удэ",51.83,107.6,["хлеб","hleb","khleb"]],["Владивосток","Bearwolf","Владивосток",43.12,131.9,["bearwolf","bear wolf","беарвулф","бирвулф"]],["Катманду","Крематорий","Катманду",27.7,85.3,["крематорий","krematoriy","krematorij"]],["Мальчик хочет в Тамбов","Рекорд Оркестр","Тамбов",52.73,41.45,["рекорд","record"]],["Покинуть Чикаго","Клава Кока","Чикаго",41.88,-87.63,["клава","klava"]],["Ростов","Баста","Ростов-на-Дону",47.22,39.72,["баста","basta"]],["Будапешт","FEDUK","Будапешт",47.5,19.04,["feduk","федук"]],["Москва","Yanix","Москва",55.75,37.62,["yanix","яникс"]],["+7(952)812","ALBLAK 52","Санкт-Петербург",59.93,30.34,["alblak","албл"]],["Amsterdam","Icegergert","Амстердам",52.37,4.9,["icegergert"]],["Амстердам","Макс Корж","Амстердам",52.37,4.9,["корж","korzh"]],["Тбилисо","Вахтанг Кикабидзе","Тбилиси",41.72,44.79,["кикабидзе","kikabidze"]],["Waking Up in Vegas","Katy Perry","Лас-Вегас",36.17,-115.14],["Big in Japan","Alphaville","Япония",36.2,138.3],["Russians","Sting","Россия",61.5,95],["Graceland","Paul Simon","Грейсленд, Мемфис",35.05,-90.02,["paul simon"]],["Calle Ocho (I Know You Want Me)","Pitbull","Калле-Очо, Майами",25.77,-80.23]];
+const COL=["#d6402f","#2563c9","#1a9c4b","#e08a00","#8e44ad","#00a3a3","#c2185b","#6d4c41"],$=i=>document.getElementById(i);
+const PCFG={config:{iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"},{urls:"stun:global.stun.twilio.com:3478"}]}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let isHost=false,peer=null,hostConn=null,conns={},players=[],code="",myId="",G={},phase="home",ui="home",canGuess=false,confirmed=false,mine=null,tent=null,answered=[],tok=0;
+const au=new Audio();au.volume=.7;$("vol").oninput=function(){au.volume=this.value/100};
+const btn=$("play");
+function show(id){["home","lobby","game"].forEach(x=>$(x).hidden=x!=id);if(id=="game")map.invalidateSize()}
+function hmsg(t){$("hmsg").textContent=t}
+function me(){return players.find(p=>p.id==myId)||{color:0}}
+function who(p){return'<span style="color:'+COL[p.color]+';font-weight:600">'+esc(p.name)+'</span>'}
+if(location.hash.length>1)$("code").value=location.hash.slice(1,5).toUpperCase();
+try{$("name").value=localStorage.getItem("sgname")||""}catch(e){}
+function getName(){const n=$("name").value.trim()||"Игрок"+Math.floor(Math.random()*90+10);try{localStorage.setItem("sgname",n)}catch(e){}return n}
+
+/* ---- карта ---- */
+const map=L.map("map",{keyboard:false,minZoom:1,maxZoom:8,zoomSnap:.5,maxBounds:[[-85,-190],[85,190]]}).setView([25,10],2),layer=L.layerGroup().addTo(map);
+map.createPane("caps").style.zIndex=410;map.createPane("guess").style.zIndex=420;
+const PAL=["#f2e3b8","#cfe8c8","#f6cfc0","#d5d9f0","#f3d6e8","#c9e6ea","#e8e0a8"];
+const GJ=["https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_110m_admin_0_countries.geojson","https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson"];
+const CL=L.layerGroup().addTo(map),CD=[];
+function ext(g){const ps=g.type=="Polygon"?[g.coordinates]:g.coordinates;let best=0,e=null;ps.forEach(p=>{let a=1e9,b=-1e9,c=1e9,d=-1e9;p[0].forEach(q=>{a=Math.min(a,q[0]);b=Math.max(b,q[0]);c=Math.min(c,q[1]);d=Math.max(d,q[1])});const ar=(b-a)*(d-c);if(ar>=best){best=ar;e=[a,b,c,d]}});return e}
+const cname=p=>p.NAME_RU||p.NAME||p.ADMIN||"";
+function updLabels(){CL.clearLayers();const k=256*Math.pow(2,map.getZoom())/360;CD.forEach(c=>{if(c.w*k>c.n.length*6.5+8)L.marker([c.y,c.x],{interactive:false,keyboard:false,icon:L.divIcon({className:"cn",html:"<span>"+esc(c.n)+"</span>",iconSize:[0,0]})}).addTo(CL)})}
+function loadMap(i){fetch(GJ[i]).then(r=>r.json()).then(g=>{g.features.forEach(f=>{const p=f.properties,e=ext(f.geometry);if(!e)return;CD.push({n:cname(p),x:typeof p.LABEL_X=="number"?p.LABEL_X:(e[0]+e[1])/2,y:typeof p.LABEL_Y=="number"?p.LABEL_Y:(e[2]+e[3])/2,w:e[1]-e[0]})});
+L.geoJSON(g,{style:f=>({fillColor:PAL[((f.properties.MAPCOLOR7||1)-1)%7],fillOpacity:1,color:"#7a7565",weight:.8}),onEachFeature:(f,l)=>l.bindTooltip(cname(f.properties),{sticky:true})}).addTo(map).bringToBack();updLabels()}).catch(()=>{if(i+1<GJ.length)loadMap(i+1);else $("msg").textContent="Не удалось загрузить карту стран. Проверьте интернет."})}
+loadMap(0);
+const CAP=L.layerGroup(),CU=["https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_50m_populated_places.geojson","https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_50m_populated_places_simple.geojson","https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_populated_places_simple.geojson"];
+function upd(){updLabels();if(map.getZoom()>=3.5){if(!map.hasLayer(CAP))CAP.addTo(map)}else map.removeLayer(CAP)}
+function loadCaps(i){fetch(CU[i]).then(r=>r.json()).then(g=>{g.features.forEach(f=>{const p=f.properties,cp=p.adm0cap!=null?p.adm0cap:p.ADM0CAP,fc=p.featurecla||p.FEATURECLA||"";if(!(cp==1||/^Admin-0 capital/.test(fc)))return;const c=f.geometry.coordinates,n=p.name_ru||p.NAME_RU||p.name||p.NAME;L.circleMarker([c[1],c[0]],{pane:"caps",radius:3,color:"#333",weight:1,fillColor:"#fff",fillOpacity:1,interactive:false}).bindTooltip(n,{permanent:true,direction:"right",offset:[4,0],className:"cap",interactive:false}).addTo(CAP)});upd()}).catch(()=>{if(i+1<CU.length)loadCaps(i+1)})}
+map.on("zoomend",upd);loadCaps(0);
+function mk(lat,lon,col,r,tip){const m=L.circleMarker([lat,lon],{pane:"guess",radius:r,color:"#fff",weight:2,fillColor:col,fillOpacity:1}).addTo(layer);if(tip)m.bindTooltip(tip,{permanent:true,direction:"top",offset:[0,-6]});return m}
+map.on("click",e=>{if(!canGuess||confirmed)return;const ll=e.latlng.wrap();mine=[ll.lat,ll.lng];if(tent)layer.removeLayer(tent);tent=mk(mine[0],mine[1],COL[me().color],7);$("confirm").disabled=false});
+
+/* ---- поиск песни (только у хоста) ---- */
+let dead={};try{dead=JSON.parse(localStorage.getItem("sgdead")||"{}")}catch(e){}
+const sk=x=>x[0]+"|"+x[1];
+function markDead(x){dead[sk(x)]=1;try{localStorage.setItem("sgdead",JSON.stringify(dead))}catch(e){}info()}
+function info(){const n=Object.keys(dead).length;$("info").innerHTML="Песен в базе: "+S.length+(n?". Исключено недоступных: "+n+' (<a href="#" id="rs">сбросить</a>)':"");const r=$("rs");if(r)r.onclick=e=>{e.preventDefault();dead={};try{localStorage.removeItem("sgdead")}catch(x){}info()}}
+info();
+function jsonp(u,ok,err){const n="cb"+Date.now()+Math.floor(Math.random()*1e4),s=document.createElement("script"),t=setTimeout(()=>{clean();err()},8000);function clean(){clearTimeout(t);delete window[n];s.remove()}window[n]=d=>{clean();ok(d)};s.onerror=()=>{clean();err()};s.src=u+"&callback="+n;document.head.appendChild(s)}
+function find(d,x){const ks=x[5]||[x[1].toLowerCase().replace(/^the /,"").split(/[ ,&]/)[0]];return(d.results||[]).filter(r=>{const a=(r.artistName||"").toLowerCase();return r.previewUrl&&ks.some(k=>a.indexOf(k)>-1)})[0]}
+function look(x,cb){let i=0,he=false;const tries=["","&country=RU"];
+const nxt=()=>{if(++i<tries.length)go();else cb(he?"err":null)};
+const go=()=>jsonp("https://itunes.apple.com/search?media=music&entity=song&limit=25&term="+encodeURIComponent(x[0]+" "+x[1])+tries[i],d=>{const m=find(d,x);if(m)cb(m.previewUrl);else nxt()},()=>{he=true;nxt()});
+go()}
+function dist(a,b,c,d){const r=Math.PI/180,x=Math.pow(Math.sin((c-a)*r/2),2)+Math.cos(a*r)*Math.cos(c*r)*Math.pow(Math.sin((d-b)*r/2),2);return 12742*Math.asin(Math.sqrt(x))}
+const pts=d=>Math.round(5000*Math.exp(-d/1500));
+
+/* ---- сеть ---- */
+function genCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i=0;i<4;i++)s+=a[Math.floor(Math.random()*a.length)];return s}
+function cleanup(){try{peer&&peer.destroy()}catch(e){}peer=null;if(G.iv)clearInterval(G.iv);G={};conns={};hostConn=null;players=[];phase="home";ui="home";canGuess=false;au.pause();au.removeAttribute("src");layer.clearLayers();show("home")}
+function bye(t){cleanup();hmsg(t)}
+function broadcast(m){Object.values(conns).forEach(c=>{if(c.open)c.send(m)})}
+function emit(m){broadcast(m);handle(m)}
+function createRoom(){isHost=true;const nm=getName();hmsg("Создаём комнату…");
+const tryCode=()=>{code=genCode();peer=new Peer("sgeo-"+code,PCFG);
+peer.on("open",()=>{myId="H";players=[{id:"H",name:nm,color:0,total:0}];phase="lobby";emit({t:"lobby",code,players})});
+peer.on("connection",hostConnection);
+peer.on("error",e=>{if(e.type=="unavailable-id"){try{peer.destroy()}catch(x){}tryCode()}else if(ui=="home")hmsg("Ошибка сети: "+e.type+". Попробуйте ещё раз.")})};
+tryCode()}
+function hostConnection(c){conns[c.peer]=c;c.on("data",m=>hostData(c,m));c.on("close",()=>dropPlayer(c.peer));c.on("error",()=>dropPlayer(c.peer))}
+function hostData(c,m){
+if(m.t=="join"){
+if(phase!="lobby"){c.send({t:"err",msg:"Игра уже идёт. Попросите хоста дождаться конца и зайдите снова."});setTimeout(()=>c.close(),400);return}
+if(players.length>=8){c.send({t:"err",msg:"В комнате уже 8 игроков."});setTimeout(()=>c.close(),400);return}
+if(players.some(p=>p.id==c.peer))return;
+const used=players.map(p=>p.color);let ci=0;while(used.includes(ci))ci++;
+players.push({id:c.peer,name:String(m.name||"Игрок").slice(0,16),color:ci,total:0});
+emit({t:"lobby",code,players})}
+else if(m.t=="guess")onGuess(c.peer,m.lat,m.lng)}
+function dropPlayer(id){delete conns[id];const i=players.findIndex(p=>p.id==id);if(i<0)return;players.splice(i,1);
+if(phase=="lobby"){emit({t:"lobby",code,players});return}
+if(G.guesses)delete G.guesses[id];
+emit({t:"players",players,done:Object.keys(G.guesses||{})});
+if(phase=="play"&&players.length&&allDone())reveal()}
+const allDone=()=>players.every(p=>G.guesses[p.id]);
+function onGuess(id,lat,lng){if(phase!="play"||G.guesses[id]||!players.some(p=>p.id==id)||typeof lat!="number"||typeof lng!="number")return;G.guesses[id]=[lat,lng];emit({t:"prog",done:Object.keys(G.guesses)});if(allDone())reveal()}
+function startGame(){G={R:+$("rounds").value,timer:+$("timer").value,rnd:-1,pool:S.filter(x=>!dead[sk(x)]).sort(()=>Math.random()-.5),guesses:{}};players.forEach(p=>p.total=0);nextRound()}
+function nextRound(){G.rnd++;G.guesses={};phase="prep";emit({t:"prep",n:G.rnd+1,R:G.R,players});pick(0)}
+function pick(errs){const t=++tok;
+if(!G.pool.length){phase="lobby";emit({t:"lobby",code,players});emit({t:"msg",text:"Закончились доступные песни."});return}
+const s=G.pool.pop();
+look(s,r=>{if(t!=tok||phase!="prep")return;
+if(r==="err"){G.pool.push(s);if(errs>=3){emit({t:"prep",n:G.rnd+1,R:G.R,players,note:"Не удаётся связаться с iTunes. Хост, проверьте интернет и нажмите «Повторить»."});const n=$("next");n.hidden=false;n.textContent="↻ Повторить";n.onclick=()=>{n.hidden=true;emit({t:"prep",n:G.rnd+1,R:G.R,players});pick(0)};return}setTimeout(()=>pick(errs+1),1500);return}
+if(r===null){markDead(s);pick(errs);return}
+G.song=s;phase="play";G.left=G.timer;
+emit({t:"round",n:G.rnd+1,R:G.R,url:r,timer:G.timer,players});
+if(G.timer>0){clearInterval(G.iv);G.iv=setInterval(()=>{G.left--;emit({t:"tick",left:G.left});if(G.left<=0){clearInterval(G.iv);reveal()}},1000)}})}
+function reveal(){if(phase!="play")return;phase="rev";clearInterval(G.iv);const s=G.song;
+const res=players.map(p=>{const g=G.guesses[p.id];let d=null,pt=0;if(g){d=dist(g[0],g[1],s[3],s[4]);pt=pts(d);p.total+=pt}return{id:p.id,name:p.name,color:p.color,lat:g?g[0]:null,lng:g?g[1]:null,d,p:pt}});
+emit({t:"rev",song:{title:s[0],artist:s[1],place:s[2],lat:s[3],lng:s[4]},res,players,last:G.rnd+1>=G.R})}
+function hostNext(){if(phase!="rev")return;if(G.rnd+1>=G.R){phase="lobby";emit({t:"lobby",code,players})}else nextRound()}
+function joinRoom(c){isHost=false;const nm=getName();code=c.toUpperCase().trim();if(code.length!=4){hmsg("Введите код из 4 символов.");return}
+hmsg("Подключаемся…");peer=new Peer(PCFG);
+const to=setTimeout(()=>{bye("Не удалось подключиться. Проверьте код или попробуйте ещё раз.")},20000);
+peer.on("open",id=>{myId=id;hostConn=peer.connect("sgeo-"+code,{reliable:true});
+hostConn.on("open",()=>{clearTimeout(to);hostConn.send({t:"join",name:nm})});
+hostConn.on("data",handle);
+hostConn.on("close",()=>{if(ui!="home")bye("Хост отключился.")})});
+peer.on("error",e=>{clearTimeout(to);if(ui=="home"||ui=="")hmsg(e.type=="peer-unavailable"?"Комната с таким кодом не найдена.":"Ошибка сети: "+e.type);else if(e.type!="peer-unavailable")bye("Связь потеряна: "+e.type)})}
+
+/* ---- интерфейс (одинаков у хоста и у игроков) ---- */
+function drawScores(){$("scores").innerHTML=players.map(p=>'<span class="sc" style="color:'+COL[p.color]+'">'+esc(p.name)+(p.id==myId?" (вы)":"")+": "+(p.total||0)+(canGuess&&answered.includes(p.id)?" ✓":"")+"</span>").join("")}
+function showLobby(){ui="lobby";show("lobby");$("rc").textContent=code;$("plist").innerHTML=players.map(p=>'<span class="sc" style="color:'+COL[p.color]+'">'+esc(p.name)+(p.id==myId?" (вы)":"")+(p.total?" — "+p.total:"")+"</span>").join("");$("hostopts").hidden=!isHost;$("wait").hidden=isHost;$("start").disabled=false}
+function handle(m){switch(m.t){
+case"lobby":players=m.players;code=m.code||code;canGuess=false;au.pause();showLobby();break;
+case"players":players=m.players;answered=m.done||answered;drawScores();break;
+case"err":bye(m.msg);break;
+case"msg":alert(m.text);break;
+case"prep":ui="game";players=m.players;show("game");canGuess=false;confirmed=false;mine=null;tent=null;answered=[];layer.clearLayers();map.invalidateSize();map.setView([25,10],2);au.pause();au.removeAttribute("src");btn.disabled=true;btn.textContent="Загрузка…";$("confirm").disabled=true;$("confirm").textContent="Подтвердить ответ";$("next").hidden=true;$("rd").textContent="Раунд "+m.n+" из "+m.R;$("timerTxt").textContent="";$("status").textContent="";$("msg").textContent=m.note||"Подбираем песню…";drawScores();break;
+case"round":players=m.players;au.src=m.url;btn.disabled=false;btn.textContent="▶ Старт";canGuess=true;$("msg").textContent="Нажмите «Старт», послушайте, поставьте точку на карте и нажмите «Подтвердить ответ».";$("timerTxt").textContent=m.timer?"⏱ "+m.timer+" с":"";$("status").textContent="Ответили: 0 из "+players.length;drawScores();break;
+case"prog":answered=m.done;$("status").textContent="Ответили: "+answered.length+" из "+players.length;drawScores();break;
+case"tick":$("timerTxt").textContent="⏱ "+Math.max(0,m.left)+" с";break;
+case"rev":showRev(m);break}}
+function showRev(m){canGuess=false;au.pause();btn.textContent="▶ Старт";players=m.players;answered=[];layer.clearLayers();tent=null;$("confirm").disabled=true;$("timerTxt").textContent="";$("status").textContent="";
+const b=[[m.song.lat,m.song.lng]];
+m.res.forEach(r=>{if(r.lat==null)return;L.polyline([[r.lat,r.lng],[m.song.lat,m.song.lng]],{pane:"guess",color:COL[r.color],weight:2,dashArray:"5 5"}).addTo(layer);mk(r.lat,r.lng,COL[r.color],7,r.name+": "+Math.round(r.d)+" км");b.push([r.lat,r.lng])});
+mk(m.song.lat,m.song.lng,"#1a9c4b",9,m.song.place);
+if(b.length>1)map.fitBounds(b,{padding:[60,60],maxZoom:6});else map.setView(b[0],4);
+const rs=m.res.slice().sort((x,y)=>(x.d==null)-(y.d==null)||x.d-y.d);
+let h="<b>"+esc(m.song.title)+"</b> — "+esc(m.song.artist)+" (зелёная точка: "+esc(m.song.place)+")<br>"+rs.map(r=>who(r)+": "+(r.d==null?"не ответил(а), +0":Math.round(r.d)+" км, +"+r.p)).join("<br>");
+if(m.last){const mx=Math.max.apply(null,players.map(p=>p.total)),w=players.filter(p=>p.total==mx);h+="<br><b>Итог: "+(players.length==1?"набрано "+mx+" очков":w.length>1?"ничья между "+w.map(who).join(", "):"победил(а) "+who(w[0]))+"!</b>"}
+$("msg").innerHTML=h;drawScores();
+const n=$("next");if(isHost){n.hidden=false;n.textContent=m.last?"Вернуться в лобби":"Следующий раунд";n.onclick=hostNext}else{n.hidden=true;$("status").textContent="Ждём, пока хост продолжит…"}}
+btn.onclick=()=>{if(au.paused&&au.getAttribute("src")){au.play();btn.textContent="⏸ Пауза"}else{au.pause();btn.textContent="▶ Старт"}};
+au.onended=()=>{btn.textContent="▶ Старт"};
+$("confirm").onclick=()=>{if(!mine||confirmed||!canGuess)return;confirmed=true;$("confirm").disabled=true;$("confirm").textContent="Ответ отправлен ✓";if(isHost)onGuess("H",mine[0],mine[1]);else if(hostConn&&hostConn.open)hostConn.send({t:"guess",lat:mine[0],lng:mine[1]})};
+$("create").onclick=createRoom;
+$("join").onclick=()=>joinRoom($("code").value);
+$("start").onclick=()=>{if(phase!="lobby")return;$("start").disabled=true;startGame()};
+$("leave").onclick=()=>cleanup();
+$("quit").onclick=()=>{if(confirm("Выйти из игры?"))cleanup()};
+$("copy").onclick=()=>{const u=location.href.split("#")[0]+"#"+code,t="Заходи в игру «Песня на карте»: "+u+" (код комнаты "+code+")";if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>{$("copy").textContent="Скопировано ✓"},()=>prompt("Скопируйте:",t));else prompt("Скопируйте:",t)};
+</script></main></body></html>
