@@ -22,11 +22,15 @@ input,select{font:inherit;padding:8px 10px;border:1px solid #ccc;border-radius:8
 .cn{width:0;height:0}
 .cn span{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:11px;font-weight:600;letter-spacing:.04em;color:#4a4636;opacity:.85;text-shadow:0 0 3px #fff,0 0 3px #fff}
 .msg{margin:10px 0;min-height:44px;line-height:1.6}
+#map.off{position:absolute;left:-99999px;width:100%;visibility:hidden}
+#qtxt{font-size:clamp(20px,3.4vw,32px);font-weight:700;text-align:center;margin:12px 0}
+#cbar{display:flex;justify-content:flex-end;margin-top:8px}
+#blank{text-align:center;margin:14px 0}#btitle{font-size:clamp(22px,4vw,38px);font-weight:700;margin-bottom:14px}#ans{font-size:20px;width:min(360px,90%);text-align:center}
 #lb{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;cursor:zoom-out}
 #lb img{max-width:96vw;max-height:96vh;object-fit:contain}
 [hidden]{display:none!important}
 </style></head><body><main>
-<h1>🎵 Песня на карте — онлайн</h1>
+<div class="bar" style="justify-content:space-between;flex-wrap:nowrap"><h1 style="margin:0">🎵 Песня на карте — онлайн</h1><button id="quit" class="alt" hidden>Выйти из игры</button></div>
 
 <section id="home" class="card">
 <p style="margin-top:0">Ваше имя:<br><input id="name" maxlength="16" placeholder="Имя"></p>
@@ -43,7 +47,7 @@ input,select{font:inherit;padding:8px 10px;border:1px solid #ccc;border-radius:8
 <div id="hostopts">
 <p>Раундов: <select id="rounds"><option>3</option><option selected>5</option><option>8</option><option>10</option><option>15</option></select>
 &nbsp; Таймер раунда: <select id="timer"><option value="0">нет</option><option value="30">30 с</option><option value="60" selected>60 с</option><option value="90">90 с</option></select></p>
-<p>Типы вопросов:<br><label><input type="checkbox" id="t1" checked> песня про место</label> <label><input type="checkbox" id="t2" checked> родина исполнителя (по музыке)</label> <label><input type="checkbox" id="t3" checked> родина исполнителя (по фото)</label></p>
+<p>Типы вопросов:<br><label><input type="checkbox" id="t1" checked> песня про место</label> <label><input type="checkbox" id="t2" checked> родина исполнителя (по музыке)</label> <label><input type="checkbox" id="t3" checked> родина исполнителя (по фото)</label> <label><input type="checkbox" id="t4" checked> родина автора (по обложке книги)</label> <label><input type="checkbox" id="t5" checked> дополни название книги</label></p>
 <p id="info" style="font-size:13px;opacity:.75"></p>
 <button id="start">Начать игру</button>
 </div>
@@ -54,13 +58,15 @@ input,select{font:inherit;padding:8px 10px;border:1px solid #ccc;border-radius:8
 <section id="game" hidden>
 <div class="bar" id="scores"></div>
 <div class="bar"><span id="rd"></span><span id="timerTxt"></span><span id="status"></span></div>
-<div class="bar"><button id="play" disabled>Загрузка…</button><label>🔊 <input type="range" id="vol" min="0" max="100" value="70"></label><button id="confirm" disabled>Подтвердить ответ</button></div>
-<div id="qtxt" style="font-weight:600;margin:6px 0"></div>
-<img id="photo" hidden alt="" title="Нажмите, чтобы открыть на весь экран" style="max-width:100%;max-height:560px;border-radius:10px;margin-bottom:10px;display:block;cursor:zoom-in">
+<div class="bar" id="abar"><button id="play" disabled>Загрузка…</button><label>🔊 <input type="range" id="vol" min="0" max="100" value="70"></label></div>
+<div id="qtxt"></div>
+<img id="photo" hidden alt="" title="Нажмите, чтобы открыть на весь экран" style="max-width:100%;max-height:560px;border-radius:10px;margin:0 auto 10px;display:block;cursor:zoom-in">
+<div id="blank" hidden><div id="btitle"></div><input id="ans" maxlength="60" autocomplete="off" placeholder="Недостающее слово"></div>
 <div id="map"></div>
+<div id="cbar"><button id="confirm" disabled>Подтвердить ответ</button></div>
 <div class="msg" id="msg"></div>
-<button id="next" hidden></button> <button id="quit" class="alt">Выйти из игры</button>
-<p style="font-size:12px;opacity:.7">Колёсико мыши — масштаб, перетаскивание — сдвиг. Поставьте точку (её можно передвинуть) и нажмите «Подтвердить ответ». Очки: 5000·e^(−расстояние/1500 км).</p>
+<button id="next" hidden></button>
+<p style="font-size:12px;opacity:.7">Колёсико мыши — масштаб, перетаскивание — сдвиг. Поставьте точку (её можно передвинуть) и нажмите «Подтвердить ответ». Очки: 5000·e^(−расстояние/1500 км); за верное слово в вопросе без карты — 1500 очков.</p>
 </section>
 
 <div id="lb" hidden><img id="lbi" alt=""></div>
@@ -73,13 +79,15 @@ const A=[["Кино","Санкт-Петербург",59.93,30.34,"Kino (band)",[
 ["Shakira","Барранкилья",10.96,-74.78],["Bad Bunny","Вега-Баха, Пуэрто-Рико",18.44,-66.39],["Daddy Yankee","Сан-Хуан",18.47,-66.1],["J Balvin","Медельин",6.24,-75.58],["Karol G","Медельин",6.24,-75.58],["Ricky Martin","Сан-Хуан",18.47,-66.1],["Gloria Estefan","Гавана",23.13,-82.38],["Celia Cruz","Гавана",23.13,-82.38],["Soda Stereo","Буэнос-Айрес",-34.6,-58.38],["Maná","Гвадалахара",20.67,-103.35,"",["maná","mana"]],["Anitta","Рио-де-Жанейро",-22.9,-43.17],["Buena Vista Social Club","Гавана",23.13,-82.38],
 ["BTS","Сеул",37.57,126.98,"BTS",["bts"]],["BLACKPINK","Сеул",37.57,126.98,"Blackpink",["blackpink"]],["PSY","Сеул",37.57,126.98,"Psy",["psy"]],["Yellow Magic Orchestra","Токио",35.68,139.69],["Babymetal","Токио",35.68,139.69],["Jay Chou","Нью-Тайбэй",25.01,121.47],["Teresa Teng","Юньлинь, Тайвань",23.7,120.5],["Faye Wong","Пекин",39.9,116.4],["A. R. Rahman","Ченнаи",13.08,80.27,"",["rahman"]],["The Hu","Улан-Батор",47.92,106.92,"The Hu (band)",["the hu"]],["Khaled","Оран",35.7,-0.63,"Khaled (musician)",["khaled"]],["Burna Boy","Порт-Харкорт",4.82,7.03],["Wizkid","Лагос",6.52,3.38],["Miriam Makeba","Йоханнесбург",-26.2,28.04],["Youssou N'Dour","Дакар",14.72,-17.47],
 ["Nirvana","Абердин, Вашингтон",46.98,-123.81,"Nirvana (band)"],["Pearl Jam","Сиэтл",47.61,-122.33],["Metallica","Лос-Анджелес",34.05,-118.24],["Red Hot Chili Peppers","Лос-Анджелес",34.05,-118.24],["Eminem","Детройт",42.33,-83.05],["Jay-Z","Бруклин, Нью-Йорк",40.65,-73.95,"Jay-Z",["jay-z"]],["Kendrick Lamar","Комптон",33.9,-118.2],["Beyoncé","Хьюстон",29.76,-95.37,"Beyoncé",["beyonc"]],["Taylor Swift","Ридинг, Пенсильвания",40.34,-75.93],["Britney Spears","Маккомб, Миссисипи",31.24,-90.45],["Madonna","Бей-Сити, Мичиган",43.6,-83.89],["Michael Jackson","Гэри, Индиана",41.59,-87.35],["Prince","Миннеаполис",44.98,-93.27,"Prince (musician)"],["Elvis Presley","Тупело",34.26,-88.7],["Bob Dylan","Дулут",46.79,-92.1],["Green Day","Беркли",37.87,-122.27],["Linkin Park","Агура-Хиллз",34.14,-118.76],["Backstreet Boys","Орландо",28.54,-81.38],["Lady Gaga","Нью-Йорк",40.71,-74],["Bruno Mars","Гонолулу",21.31,-157.86],["Imagine Dragons","Лас-Вегас",36.17,-115.14],["Drake","Торонто",43.65,-79.38,"Drake (musician)"],["Justin Bieber","Стратфорд, Онтарио",43.37,-80.98],["Celine Dion","Шарлемань, Квебек",45.72,-73.48,"",["celine","céline"]],["Avril Lavigne","Беллвилл, Онтарио",44.16,-77.38],["AC/DC","Сидней",-33.87,151.21],["Kylie Minogue","Мельбурн",-37.81,144.96],["Tame Impala","Перт",-31.95,115.86],["Sia","Аделаида",-34.93,138.6,"Sia (musician)"],["Lorde","Окленд",-36.79,174.77],["Bob Marley","Най-Майл, Ямайка",18.32,-77.07],["Rihanna","Бриджтаун, Барбадос",13.1,-59.61],["Sean Paul","Кингстон",17.97,-76.79]];
+const B=[["Война и мир","Лев Толстой","Ясная Поляна",54.07,37.52,"War and Peace","Tolstoy"],["Преступление и наказание","Фёдор Достоевский","Москва",55.75,37.62,"Crime and Punishment","Dostoevsky"],["Мастер и Маргарита","Михаил Булгаков","Киев",50.45,30.52,"The Master and Margarita","Bulgakov"],["Евгений Онегин","Александр Пушкин","Москва",55.75,37.62,"Eugene Onegin","Pushkin"],["Мёртвые души","Николай Гоголь","Великие Сорочинцы",49.98,33.93,"Dead Souls","Gogol"],["Тихий Дон","Михаил Шолохов","Вёшенская",49.63,41.72,"And Quiet Flows the Don","Sholokhov"],["Отцы и дети","Иван Тургенев","Орёл",52.97,36.06,"Fathers and Sons","Turgenev"],["Обломов","Иван Гончаров","Ульяновск",54.32,48.4,"Oblomov","Goncharov"],["Вишнёвый сад","Антон Чехов","Таганрог",47.22,38.9,"The Cherry Orchard","Chekhov"],["Двенадцать стульев","Ильф и Петров","Одесса",46.48,30.73,"The Twelve Chairs","Ilf"],["Доктор Живаго","Борис Пастернак","Москва",55.75,37.62,"Doctor Zhivago","Pasternak"],["Один день Ивана Денисовича","Александр Солженицын","Кисловодск",43.9,42.72,"One Day in the Life of Ivan Denisovich","Solzhenitsyn"],["Метро 2033","Дмитрий Глуховский","Москва",55.75,37.62,"Metro 2033","Glukhovsky"],["Generation П","Виктор Пелевин","Москва",55.75,37.62,"Generation P","Pelevin"],["Гарри Поттер и философский камень","Дж. К. Роулинг","Йейт, Англия",51.54,-2.41,"Harry Potter and the Philosopher's Stone","Rowling"],["Властелин колец","Дж. Р. Р. Толкин","Блумфонтейн, ЮАР",-29.12,26.21,"The Fellowship of the Ring","Tolkien"],["Маленький принц","Антуан де Сент-Экзюпери","Лион",45.76,4.84,"The Little Prince","Saint-Exupéry"],["Три мушкетёра","Александр Дюма","Вилле-Котре",49.25,3.09,"The Three Musketeers","Dumas"],["Отверженные","Виктор Гюго","Безансон",47.24,6.02,"Les Misérables","Hugo"],["Старик и море","Эрнест Хемингуэй","Ок-Парк, Иллинойс",41.89,-87.78,"The Old Man and the Sea","Hemingway"],["Великий Гэтсби","Фрэнсис Скотт Фицджеральд","Сент-Пол, Миннесота",44.95,-93.09,"The Great Gatsby","Fitzgerald"],["1984","Джордж Оруэлл","Мотихари, Индия",26.65,84.92,"Nineteen Eighty-Four","Orwell"],["Дон Кихот","Мигель де Сервантес","Алькала-де-Энарес",40.48,-3.36,"Don Quixote","Cervantes"],["Сто лет одиночества","Габриэль Гарсиа Маркес","Аракатака",10.59,-74.19,"One Hundred Years of Solitude","Márquez"],["Алхимик","Пауло Коэльо","Рио-де-Жанейро",-22.9,-43.17,"The Alchemist","Coelho"],["Убить пересмешника","Харпер Ли","Монровилл, Алабама",31.53,-87.32,"To Kill a Mockingbird","Harper Lee"],["Над пропастью во ржи","Джером Сэлинджер","Нью-Йорк",40.71,-74,"The Catcher in the Rye","Salinger"],["Гордость и предубеждение","Джейн Остин","Стивентон",51.25,-1.22,"Pride and Prejudice","Austen"],["Дракула","Брэм Стокер","Дублин",53.35,-6.26,"Dracula","Stoker"],["Игра престолов","Джордж Мартин","Байонн, Нью-Джерси",40.67,-74.11,"A Game of Thrones","Martin"],["Девушка с татуировкой дракона","Стиг Ларссон","Шеллефтехамн",64.69,21.24,"The Girl with the Dragon Tattoo","Larsson"],["Имя розы","Умберто Эко","Алессандрия",44.91,8.61,"The Name of the Rose","Eco"],["Норвежский лес","Харуки Мураками","Киото",35.01,135.77,"Norwegian Wood","Murakami"],["Процесс","Франц Кафка","Прага",50.08,14.44,"The Trial","Kafka"],["Портрет Дориана Грея","Оскар Уайльд","Дублин",53.35,-6.26,"The Picture of Dorian Gray","Wilde"],["Приключения Тома Сойера","Марк Твен","Флорида, Миссури",39.49,-91.99,"The Adventures of Tom Sawyer","Twain"],["Моби Дик","Герман Мелвилл","Нью-Йорк",40.71,-74,"Moby-Dick","Melville"],["Шерлок Холмс","Артур Конан Дойл","Эдинбург",55.95,-3.19,"The Adventures of Sherlock Holmes","Doyle"],["Хроники Нарнии","Клайв Льюис","Белфаст",54.6,-5.93,"The Lion, the Witch and the Wardrobe","Lewis"],["Пеппи длинный чулок","Астрид Линдгрен","Виммербю",57.66,15.86,"Pippi Longstocking","Lindgren"],["Двадцать тысяч лье под водой","Жюль Верн","Нант",47.22,-1.55,"Twenty Thousand Leagues Under the Sea","Verne"],["Фауст","Иоганн Гёте","Франкфурт-на-Майне",50.11,8.68,"Faust","Goethe"],["Божественная комедия","Данте Алигьери","Флоренция",43.77,11.26,"The Divine Comedy","Dante"],["Посторонний","Альбер Камю","Дреан, Алжир",36.68,7.75,"The Stranger","Camus"],["Всё распадается","Чинуа Ачебе","Огиди, Нигерия",6.15,6.87,"Things Fall Apart","Achebe"]];
+const F=["Горе от ума","Капитанская дочка","Герой нашего времени","Записки из подполья","Собачье сердце","Белая гвардия","Золотой телёнок","Волшебник Изумрудного города","Граф Монте-Кристо","Путешествие к центру Земли","Остров сокровищ","Собака Баскервилей","Убийство в Восточном экспрессе","Унесённые ветром","Золотой ключик","Как закалялась сталь","Три товарища","Снежная королева","Алиса в Стране чудес","Руслан и Людмила","Сказка о царе Салтане","Старуха Изергиль","Анна Каренина","Братья Карамазовы","Тарас Бульба","Дама с собачкой","Человек в футляре","Бедная Лиза","Хождение по мукам","Двенадцать месяцев","Дядя Фёдор, пёс и кот"];
 const COL=["#d6402f","#2563c9","#1a9c4b","#e08a00","#8e44ad","#00a3a3","#c2185b","#6d4c41"],$=i=>document.getElementById(i);
 const PCFG={config:{iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"},{urls:"stun:global.stun.twilio.com:3478"}]}};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let isHost=false,peer=null,hostConn=null,conns={},players=[],code="",myId="",G={},phase="home",ui="home",canGuess=false,confirmed=false,mine=null,tent=null,answered=[],tok=0;
 const au=new Audio();au.volume=.7;$("vol").oninput=function(){au.volume=this.value/100};
-const btn=$("play");
-function show(id){["home","lobby","game"].forEach(x=>$(x).hidden=x!=id);if(id=="game")map.invalidateSize()}
+const btn=$("play");let curQ="";
+function show(id){["home","lobby","game"].forEach(x=>$(x).hidden=x!=id);$("quit").hidden=id!="game";if(id=="game")map.invalidateSize()}
 function hmsg(t){$("hmsg").textContent=t}
 function me(){return players.find(p=>p.id==myId)||{color:0}}
 function who(p){return'<span style="color:'+COL[p.color]+';font-weight:600">'+esc(p.name)+'</span>'}
@@ -143,19 +151,19 @@ if(players.some(p=>p.id==c.peer))return;
 const used=players.map(p=>p.color);let ci=0;while(used.includes(ci))ci++;
 players.push({id:c.peer,name:String(m.name||"Игрок").slice(0,16),color:ci,total:0});
 emit({t:"lobby",code,players})}
-else if(m.t=="guess")onGuess(c.peer,m.lat,m.lng)}
+else if(m.t=="guess")onGuess(c.peer,m.lat,m.lng,m.text)}
 function dropPlayer(id){delete conns[id];const i=players.findIndex(p=>p.id==id);if(i<0)return;players.splice(i,1);
 if(phase=="lobby"){emit({t:"lobby",code,players});return}
 if(G.guesses)delete G.guesses[id];
 emit({t:"players",players,done:Object.keys(G.guesses||{})});
 if(phase=="play"&&players.length&&allDone())reveal()}
 const allDone=()=>players.every(p=>G.guesses[p.id]);
-function onGuess(id,lat,lng){if(phase!="play"||G.guesses[id]||!players.some(p=>p.id==id)||typeof lat!="number"||typeof lng!="number")return;G.guesses[id]=[lat,lng];emit({t:"prog",done:Object.keys(G.guesses)});if(allDone())reveal()}
-function startGame(){const E=["song","origin","photo"].filter((x,i)=>$("t"+(i+1)).checked);if(!E.length)E.push("song");const R=+$("rounds").value,p=[];for(let i=0;i<R;i++)p.push(E[Math.floor(Math.random()*E.length)]);if(R>1&&E.length>1&&new Set(p).size==p.length)p[R-1]=p[0];
-G={R,timer:+$("timer").value,rnd:-1,plan:p,pool:S.filter(x=>!dead[sk(x)]).sort(()=>Math.random()-.5),ap:[],guesses:{}};players.forEach(x=>x.total=0);nextRound()}
-function nextRound(){G.rnd++;G.guesses={};G.type=G.plan[G.rnd];phase="prep";emit({t:"prep",n:G.rnd+1,R:G.R,players});G.type=="song"?pick(0):pickA(0)}
+function onGuess(id,lat,lng,text){if(phase!="play"||G.guesses[id]||!players.some(p=>p.id==id))return;if(G.type=="fill"){if(typeof text!="string"||!text.trim())return;G.guesses[id]=text.trim().slice(0,60)}else{if(typeof lat!="number"||typeof lng!="number")return;G.guesses[id]=[lat,lng]}emit({t:"prog",done:Object.keys(G.guesses)});if(allDone())reveal()}
+function startGame(){const E=["song","origin","photo","book","fill"].filter((x,i)=>$("t"+(i+1)).checked);if(!E.length)E.push("song");const R=+$("rounds").value,p=[];for(let i=0;i<R;i++)p.push(E[Math.floor(Math.random()*E.length)]);if(R>1&&E.length>1&&new Set(p).size==p.length)p[R-1]=p[0];
+G={R,timer:+$("timer").value,rnd:-1,plan:p,pool:S.filter(x=>!dead[sk(x)]).sort(()=>Math.random()-.5),ap:[],bp:[],guesses:{}};players.forEach(x=>x.total=0);nextRound()}
+function nextRound(){G.rnd++;G.guesses={};G.type=G.plan[G.rnd];phase="prep";emit({t:"prep",n:G.rnd+1,R:G.R,players,q:G.type});({song:pick,origin:pickA,photo:pickA,book:pickB,fill:pickF}[G.type])(0)}
 function retryUI(fn){emit({t:"prep",n:G.rnd+1,R:G.R,players,note:"Не удаётся связаться с iTunes. Хост, проверьте интернет и нажмите «Повторить»."});const n=$("next");n.hidden=false;n.textContent="↻ Повторить";n.onclick=()=>{n.hidden=true;emit({t:"prep",n:G.rnd+1,R:G.R,players});fn(0)}}
-function startRound(url,img,fb){phase="play";G.left=G.timer;emit({t:"round",n:G.rnd+1,R:G.R,url,img,fb,q:G.type,timer:G.timer,players});if(G.timer>0){clearInterval(G.iv);G.iv=setInterval(()=>{G.left--;emit({t:"tick",left:G.left});if(G.left<=0){clearInterval(G.iv);reveal()}},1000)}}
+function startRound(url,img,fb,blank){phase="play";G.left=G.timer;emit({t:"round",n:G.rnd+1,R:G.R,url,img,fb,blank,q:G.type,timer:G.timer,players});if(G.timer>0){clearInterval(G.iv);G.iv=setInterval(()=>{G.left--;emit({t:"tick",left:G.left});if(G.left<=0){clearInterval(G.iv);reveal()}},1000)}}
 function pick(errs){const t=++tok;if(!G.pool.length){phase="lobby";emit({t:"lobby",code,players});emit({t:"msg",text:"Закончились доступные песни."});return}const s=G.pool.pop();
 look(s,r=>{if(t!=tok||phase!="prep")return;if(r==="err"){G.pool.push(s);if(errs>=3)return retryUI(pick);setTimeout(()=>pick(errs+1),1500);return}if(r===null){markDead(s);pick(errs);return}G.song=s;startRound(r)})}
 function lookArtist(a,cb){let i=0,he=false;const tries=["","&country=RU"],ks=a[5],dk=a[0].toLowerCase().replace(/^the /,"");
@@ -170,7 +178,19 @@ const bad=()=>{if(!ok())return;if(errs>=3){if(k=="photo"){G.plan=G.plan.map((x,i
 if(k=="photo"){const fin=u=>{G.song=[a[0],"",a[1],a[2],a[3]];startRound(null,/\/\d+px-/.test(u)?u.replace(/\/\d+px-/,"/960px-"):u,u)},art=Math.random()<.3,V=c=>lookArtist(a,r=>c(r&&r!=="err"?r.artworkUrl100.replace("100x100bb","600x600bb"):null)),W=c=>wikiPhoto(a,c);
 (art?V:W)(u=>{if(!ok())return;if(u)return fin(u);(art?W:V)(u2=>{if(!ok())return;if(u2)fin(u2);else bad()})});return}
 lookArtist(a,r=>{if(!ok())return;if(r==="err"){G.ap.push(a);bad();return}if(r===null){markDead("@"+a[0]);pickA(errs);return}G.song=[r.trackName,a[0],a[1],a[2],a[3]];startRound(r.previewUrl)})}
+function bookCover(b,cb){const q=encodeURIComponent(b[5]),an=encodeURIComponent(b[6]);
+function gb(){fetch("https://www.googleapis.com/books/v1/volumes?maxResults=3&q="+encodeURIComponent("intitle:"+b[5]+" inauthor:"+b[6])).then(r=>r.json()).then(j=>{const it=(j.items||[]).find(x=>x.volumeInfo&&x.volumeInfo.imageLinks);cb(it?it.volumeInfo.imageLinks.thumbnail.replace("http://","https://").replace("zoom=1","zoom=2"):null)}).catch(()=>cb(null))}
+fetch("https://openlibrary.org/search.json?limit=5&fields=cover_i&title="+q+"&author="+an).then(r=>r.json()).then(j=>{const d=(j.docs||[]).find(x=>x.cover_i);if(d)cb("https://covers.openlibrary.org/b/id/"+d.cover_i+"-L.jpg");else gb()}).catch(gb)}
+function pickB(errs){const t=++tok;if(!G.bp.length)G.bp=B.slice().sort(()=>Math.random()-.5);const b=G.bp.pop(),ok=()=>t==tok&&phase=="prep";
+bookCover(b,u=>{if(!ok())return;if(u){G.song=[b[0],b[1],b[2],b[3],b[4]];return startRound(null,u,u)}
+if(errs>=3){G.plan=G.plan.map((x,i)=>i>=G.rnd&&x=="book"?"origin":x);G.type="origin";emit({t:"prep",n:G.rnd+1,R:G.R,players,note:"Обложки книг недоступны — раунд заменён на угадывание по музыке."});return pickA(0)}pickB(errs+1)})}
+function lev(a,b){const d=[];for(let i=0;i<=a.length;i++)d[i]=[i];for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]==b[j-1]?0:1));return d[a.length][b.length]}
+const nm=s=>String(s).toLowerCase().replace(/ё/g,"е").replace(/[^a-zа-я0-9]/g,""),FILLPTS=1500;
+function fillOk(g,w){const a=nm(g),b=nm(w);return a==b||(b.length>=5&&lev(a,b)<=1)}
+function pickF(){const L=F.concat(B.map(b=>b[0])),stop=["и","в","на","с","о","об","по","за","из","от","до","для","при","не","к","у","а","но","же","что","как","все-все-все"];
+for(let n=0;n<40;n++){const t=L[Math.floor(Math.random()*L.length)],ws=t.split(" "),c=[];ws.forEach((w,i)=>{const x=w.replace(/[«»,.!?:;"]/g,"");if(/^[а-яё]{3,}$/i.test(x)&&!stop.includes(x.toLowerCase()))c.push([i,x])});if(!c.length||ws.length<2)continue;const k=c[Math.floor(Math.random()*c.length)],d=ws.slice();d[k[0]]=ws[k[0]].replace(k[1],"_____");G.fill={full:t,word:k[1]};G.song=[t,"","",0,0];return startRound(null,null,null,d.join(" "))}}
 function reveal(){if(phase!="play")return;phase="rev";clearInterval(G.iv);const s=G.song;
+if(G.type=="fill"){const res=players.map(p=>{const g=G.guesses[p.id],k=g!=null&&fillOk(g,G.fill.word),pt=k?FILLPTS:0;p.total+=pt;return{id:p.id,name:p.name,color:p.color,txt:g==null?null:g,ok:k,p:pt}});emit({t:"rev",q:"fill",song:{title:G.fill.full,artist:"",place:""},res,players,last:G.rnd+1>=G.R});return}
 const res=players.map(p=>{const g=G.guesses[p.id];let d=null,pt=0;if(g){d=dist(g[0],g[1],s[3],s[4]);pt=pts(d);p.total+=pt}return{id:p.id,name:p.name,color:p.color,lat:g?g[0]:null,lng:g?g[1]:null,d,p:pt}});
 emit({t:"rev",song:{title:s[0],artist:s[1],place:s[2],lat:s[3],lng:s[4]},res,players,q:G.type,last:G.rnd+1>=G.R})}
 function hostNext(){if(phase!="rev")return;if(G.rnd+1>=G.R){phase="lobby";emit({t:"lobby",code,players})}else nextRound()}
@@ -191,24 +211,27 @@ case"lobby":players=m.players;code=m.code||code;canGuess=false;au.pause();showLo
 case"players":players=m.players;answered=m.done||answered;drawScores();break;
 case"err":bye(m.msg);break;
 case"msg":alert(m.text);break;
-case"prep":ui="game";players=m.players;show("game");canGuess=false;confirmed=false;mine=null;tent=null;answered=[];layer.clearLayers();map.invalidateSize();map.setView([25,10],2);au.pause();au.removeAttribute("src");btn.disabled=true;btn.textContent="Загрузка…";$("confirm").disabled=true;$("confirm").textContent="Подтвердить ответ";$("next").hidden=true;$("rd").textContent="Раунд "+m.n+" из "+m.R;$("timerTxt").textContent="";$("photo").hidden=true;$("qtxt").textContent="";btn.hidden=false;$("status").textContent="";$("msg").textContent=m.note||"Подбираем песню…";drawScores();break;
-case"round":players=m.players;canGuess=true;$("qtxt").textContent={song:"🎵 В песне поётся о каком-то месте. Где это?",origin:"🎤 Откуда родом исполнитель этой песни?",photo:"📷 Откуда родом исполнитель (группа) с фото?"}[m.q]||"";const im=$("photo");im.dataset.fb=m.fb||"";im.onerror=()=>{if(im.dataset.fb&&im.src!=im.dataset.fb)im.src=im.dataset.fb;else im.hidden=true};if(m.img){im.hidden=false;im.src=m.img}else im.hidden=true;btn.hidden=!m.url;if(m.url){au.src=m.url;btn.disabled=false;btn.textContent="▶ Старт"}$("msg").textContent=(m.url?"Нажмите «Старт», послушайте, п":"П")+"оставьте точку на карте и нажмите «Подтвердить ответ».";$("timerTxt").textContent=m.timer?"⏱ "+m.timer+" с":"";$("status").textContent="Ответили: 0 из "+players.length;drawScores();break;
+case"prep":ui="game";players=m.players;show("game");canGuess=false;confirmed=false;mine=null;tent=null;answered=[];layer.clearLayers();map.invalidateSize();map.setView([25,10],2);au.pause();au.removeAttribute("src");btn.disabled=true;btn.textContent="Загрузка…";$("confirm").disabled=true;$("confirm").textContent="Подтвердить ответ";$("next").hidden=true;$("rd").textContent="Раунд "+m.n+" из "+m.R;$("timerTxt").textContent="";$("photo").hidden=true;$("qtxt").textContent="";$("abar").hidden=m.q?!["song","origin"].includes(m.q):false;$("blank").hidden=true;$("map").classList.remove("off");map.invalidateSize();$("ans").value="";$("ans").disabled=false;curQ="";$("status").textContent="";$("msg").textContent=m.note||"Подбираем песню…";drawScores();break;
+case"round":players=m.players;curQ=m.q;canGuess=true;$("qtxt").textContent={song:"🎵 В песне поётся о каком-то месте. Где это?",origin:"🎤 Откуда родом исполнитель этой песни?",photo:"📷 Откуда родом исполнитель (группа) с фото?",book:"📚 Откуда родом автор этой книги?",fill:"📖 Вставьте пропущенное слово в названии книги"}[m.q]||"";if(m.q=="fill"){$("map").classList.add("off");$("blank").hidden=false;$("btitle").textContent=m.blank||"";setTimeout(()=>$("ans").focus(),50)}const im=$("photo");im.dataset.fb=m.fb||"";im.onerror=()=>{if(im.dataset.fb&&im.src!=im.dataset.fb)im.src=im.dataset.fb;else im.hidden=true};if(m.img){im.hidden=false;im.src=m.img}else im.hidden=true;$("abar").hidden=!m.url;if(m.url){au.src=m.url;btn.disabled=false;btn.textContent="▶ Старт"}$("msg").textContent=m.q=="fill"?"Введите пропущенное слово и нажмите «Подтвердить ответ».":(m.url?"Нажмите «Старт», послушайте, п":"П")+"оставьте точку на карте и нажмите «Подтвердить ответ».";$("timerTxt").textContent=m.timer?"⏱ "+m.timer+" с":"";$("status").textContent="Ответили: 0 из "+players.length;drawScores();break;
 case"prog":answered=m.done;$("status").textContent="Ответили: "+answered.length+" из "+players.length;drawScores();break;
 case"tick":$("timerTxt").textContent="⏱ "+Math.max(0,m.left)+" с";break;
 case"rev":showRev(m);break}}
+function endTxt(){const mx=Math.max.apply(null,players.map(p=>p.total)),w=players.filter(p=>p.total==mx);return"<br><b>Итог: "+(players.length==1?"набрано "+mx+" очков":w.length>1?"ничья между "+w.map(who).join(", "):"победил(а) "+who(w[0]))+"!</b>"}
+function nextBtn(m){const n=$("next");if(isHost){n.hidden=false;n.textContent=m.last?"Вернуться в лобби":"Следующий раунд";n.onclick=hostNext}else{n.hidden=true;$("status").textContent="Ждём, пока хост продолжит…"}}
 function showRev(m){canGuess=false;au.pause();btn.textContent="▶ Старт";players=m.players;answered=[];layer.clearLayers();tent=null;$("confirm").disabled=true;$("timerTxt").textContent="";$("status").textContent="";
+if(m.q=="fill"){$("btitle").textContent=m.song.title;$("ans").disabled=true;const rs=m.res.slice().sort((x,y)=>y.p-x.p);let h="<b>Правильно: "+esc(m.song.title)+"</b><br>"+rs.map(r=>who(r)+": "+(r.txt==null?"нет ответа":"«"+esc(r.txt)+"» "+(r.ok?"✓":"✗"))+", +"+r.p).join("<br>");if(m.last)h+=endTxt();$("msg").innerHTML=h;drawScores();nextBtn(m);return}
 const b=[[m.song.lat,m.song.lng]];
 m.res.forEach(r=>{if(r.lat==null)return;L.polyline([[r.lat,r.lng],[m.song.lat,m.song.lng]],{pane:"guess",color:COL[r.color],weight:2,dashArray:"5 5"}).addTo(layer);mk(r.lat,r.lng,COL[r.color],7,r.name+": "+Math.round(r.d)+" км");b.push([r.lat,r.lng])});
 mk(m.song.lat,m.song.lng,"#1a9c4b",9,m.song.place);
 if(b.length>1)map.fitBounds(b,{padding:[60,60],maxZoom:6});else map.setView(b[0],4);
 const rs=m.res.slice().sort((x,y)=>(x.d==null)-(y.d==null)||x.d-y.d);
-let h=(m.q=="song"?"<b>"+esc(m.song.title)+"</b> — "+esc(m.song.artist)+" (зелёная точка: "+esc(m.song.place)+")":m.q=="origin"?"<b>"+esc(m.song.artist)+"</b> — «"+esc(m.song.title)+"» — родом из: "+esc(m.song.place):"<b>"+esc(m.song.title)+"</b> — родом из: "+esc(m.song.place))+"<br>"+rs.map(r=>who(r)+": "+(r.d==null?"не ответил(а), +0":Math.round(r.d)+" км, +"+r.p)).join("<br>");
-if(m.last){const mx=Math.max.apply(null,players.map(p=>p.total)),w=players.filter(p=>p.total==mx);h+="<br><b>Итог: "+(players.length==1?"набрано "+mx+" очков":w.length>1?"ничья между "+w.map(who).join(", "):"победил(а) "+who(w[0]))+"!</b>"}
-$("msg").innerHTML=h;drawScores();
-const n=$("next");if(isHost){n.hidden=false;n.textContent=m.last?"Вернуться в лобби":"Следующий раунд";n.onclick=hostNext}else{n.hidden=true;$("status").textContent="Ждём, пока хост продолжит…"}}
+let h=(m.q=="song"?"<b>"+esc(m.song.title)+"</b> — "+esc(m.song.artist)+" (зелёная точка: "+esc(m.song.place)+")":m.q=="origin"||m.q=="book"?"<b>"+esc(m.song.artist)+"</b> — «"+esc(m.song.title)+"» — родом из: "+esc(m.song.place):"<b>"+esc(m.song.title)+"</b> — родом из: "+esc(m.song.place))+"<br>"+rs.map(r=>who(r)+": "+(r.d==null?"не ответил(а), +0":Math.round(r.d)+" км, +"+r.p)).join("<br>");
+if(m.last)h+=endTxt();
+$("msg").innerHTML=h;drawScores();nextBtn(m)}
 btn.onclick=()=>{if(au.paused&&au.getAttribute("src")){au.play();btn.textContent="⏸ Пауза"}else{au.pause();btn.textContent="▶ Старт"}};
 au.onended=()=>{btn.textContent="▶ Старт"};
-$("confirm").onclick=()=>{if(!mine||confirmed||!canGuess)return;confirmed=true;$("confirm").disabled=true;$("confirm").textContent="Ответ отправлен ✓";if(isHost)onGuess("H",mine[0],mine[1]);else if(hostConn&&hostConn.open)hostConn.send({t:"guess",lat:mine[0],lng:mine[1]})};
+$("confirm").onclick=()=>{if(confirmed||!canGuess)return;const f=curQ=="fill",tx=$("ans").value.trim();if(f?!tx:!mine)return;confirmed=true;$("confirm").disabled=true;$("confirm").textContent="Ответ отправлен ✓";$("ans").disabled=true;if(isHost)onGuess("H",f?0:mine[0],f?0:mine[1],f?tx:undefined);else if(hostConn&&hostConn.open)hostConn.send(f?{t:"guess",text:tx}:{t:"guess",lat:mine[0],lng:mine[1]})};
+$("ans").oninput=()=>{$("confirm").disabled=!(canGuess&&!confirmed&&$("ans").value.trim())};$("ans").onkeydown=e=>{if(e.key=="Enter")$("confirm").click()};
 $("photo").onclick=()=>{$("lbi").src=$("photo").src;$("lb").hidden=false};$("lb").onclick=()=>{$("lb").hidden=true};document.addEventListener("keydown",e=>{if(e.key=="Escape")$("lb").hidden=true});
 $("create").onclick=createRoom;
 $("join").onclick=()=>joinRoom($("code").value);
