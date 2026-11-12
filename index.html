@@ -61,9 +61,9 @@ input,select{font:inherit;padding:8px 10px;border:1px solid #ccc;border-radius:8
 <div style="font-weight:600;margin:8px 0">Игроки</div>
 <div class="bar" id="plist"></div>
 <div id="hostopts">
-<p>Раундов: <input type="number" id="rounds" value="5" min="1" max="50" list="rl" style="width:80px"><datalist id="rl"><option value="3"><option value="5"><option value="8"><option value="10"><option value="15"><option value="20"></datalist>
-&nbsp; Секунд на вопрос: <input type="number" id="timer" value="90" min="0" max="600" list="tl" style="width:80px"><datalist id="tl"><option value="0"><option value="60"><option value="90"><option value="120"><option value="180"></datalist></p>
-<p style="font-size:12px;opacity:.7;margin-top:-6px">Можно ввести своё число или выбрать из списка. 0 секунд — без таймера.</p>
+<p>Раундов: <input type="number" id="rounds" value="10" min="1" max="50" style="width:80px">
+&nbsp; Секунд на вопрос: <input type="number" id="timer" value="60" min="0" max="600" style="width:80px"></p>
+<p style="font-size:12px;opacity:.7;margin-top:-6px">Введите число. 0 секунд — без таймера.</p>
 <p>Типы вопросов:<br><label><input type="checkbox" id="t1" checked> песня про место</label> <label><input type="checkbox" id="t2" checked> родина исполнителя (по музыке)</label> <label><input type="checkbox" id="t3" checked> родина исполнителя (по фото)</label> <label><input type="checkbox" id="t4" checked> родина автора (по обложке книги)</label> <label><input type="checkbox" id="t5" checked> дополни название книги</label> <label><input type="checkbox" id="t6" checked> родина спортсмена (по фото, с подсказкой)</label> <label><input type="checkbox" id="t7" checked> родина разработчиков игры (по арту)</label></p>
 <p id="info" style="font-size:13px;opacity:.75"></p>
 <button id="start">Начать игру</button>
@@ -110,7 +110,7 @@ const PCFG={config:{iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stu
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let isHost=false,peer=null,hostConn=null,conns={},players=[],code="",myId="",G={},phase="home",ui="home",canGuess=false,confirmed=false,mine=null,tent=null,answered=[],tok=0;
 const au=new Audio();au.volume=.7;$("vol").oninput=function(){au.volume=this.value/100};
-const btn=$("play");let curQ="",manual=false,mcount=0,pend=null,hinted=false,plateOn=false,tN=null,cntA=0,cntT=0,revHtml="",revLast=false,inRev=false,mqMode="",mq=[],seen=new Set(),sidC=0,mySid=-1,stateLog=[],hbT=null,pendG=null,pendT=null,readySent=false,lastSync=0;
+const btn=$("play");let curQ="",manual=false,mcount=0,pend=null,hinted=false,plateOn=false,tN=null,cntA=0,cntT=0,revHtml="",revLast=false,inRev=false,mqMode="",mq=[],seen=new Set(),sidC=0,mySid=-1,stateLog=[],hbT=null,pendG=null,pendT=null,readySent=false,lastSync=0,relayOk=false,ws=null;
 function plate(){const p=$("timerBig");if(!plateOn){p.hidden=true;return}p.hidden=false;const d=$("tdig");if(tN==null)d.hidden=true;else{d.hidden=false;d.textContent="⏱ "+Math.floor(tN/60)+":"+String(tN%60).padStart(2,"0");d.classList.toggle("hot",tN<=10)}$("tcnt").textContent=cntA+"/"+cntT;$("tck").hidden=!(cntT>0&&cntA==cntT)}
 function whoAns(){$("whoans").textContent="Ответили: "+(players.filter(p=>answered.includes(p.id)).map(p=>p.name).join(", ")||"пока никто")+" ("+answered.length+"/"+players.length+")"}
 function reqSync(){const t=Date.now();if(t-lastSync<3000)return;lastSync=t;if(hostConn&&hostConn.open)try{hostConn.send({t:"sync"})}catch(e){}}
@@ -159,9 +159,10 @@ const pts=d=>Math.round(5000*Math.exp(-d/1500));
 /* ---- сеть ---- */
 function netErr(e){return e.type=="peer-unavailable"?"Комната с таким кодом не найдена.":(e.type=="server-error"||e.type=="socket-error"||e.type=="socket-closed")?"Нет связи со службой соединения PeerJS (0.peerjs.com): "+e.type+". Скорее всего, её блокирует сеть или провайдер (тогда помогает VPN), либо антивирус или расширение браузера. Попробуйте режим без сервера — раздел «Не создаётся комната?» ниже.":"Ошибка сети: "+e.type}
 function genCode(n){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i=0;i<(n||4);i++)s+=a[Math.floor(Math.random()*a.length)];return s}
-function cleanup(){try{hostConn&&hostConn.close()}catch(e){}if(mqMode=="broker"&&isHost){try{mqPub("sgeo7/"+code+"/dn",{t:"hostgone"})}catch(e){}}const oldMq=mq;mq=[];setTimeout(()=>oldMq.forEach(c=>{try{c.end(true)}catch(e){}}),500);clearInterval(hbT);clearInterval(pendT);clearTimeout(G.lt);pendG=null;mqMode="";sidC=0;mySid=-1;stateLog=[];try{peer&&peer.destroy()}catch(e){}peer=null;if(G.iv)clearInterval(G.iv);G={};Object.values(conns).forEach(c=>{try{c.close()}catch(e){}});try{hostConn&&hostConn.close()}catch(e){}conns={};hostConn=null;manual=false;pend=null;$("invbox").hidden=true;$("ansbox").hidden=true;players=[];phase="home";ui="home";canGuess=false;au.pause();au.removeAttribute("src");layer.clearLayers();show("home")}
+function cleanup(){const w0=ws;ws=null;try{hostConn&&hostConn.close()}catch(e){}if(mqMode=="broker"&&isHost){try{mqPub("sgeo7/"+code+"/dn",{t:"hostgone"})}catch(e){}}const oldMq=mq;mq=[];setTimeout(()=>oldMq.forEach(c=>{try{c.end(true)}catch(e){}}),500);clearInterval(hbT);clearInterval(pendT);clearTimeout(G.lt);pendG=null;mqMode="";sidC=0;mySid=-1;stateLog=[];try{w0&&w0.close()}catch(e){}try{peer&&peer.destroy()}catch(e){}peer=null;if(G.iv)clearInterval(G.iv);G={};Object.values(conns).forEach(c=>{try{c.close()}catch(e){}});try{hostConn&&hostConn.close()}catch(e){}conns={};hostConn=null;manual=false;pend=null;$("invbox").hidden=true;$("ansbox").hidden=true;players=[];phase="home";ui="home";canGuess=false;au.pause();au.removeAttribute("src");layer.clearLayers();show("home")}
 function bye(t){cleanup();hmsg(t)}
-function broadcast(m){if(mqMode=="broker"&&isHost){mqPub("sgeo7/"+code+"/dn",m);return}Object.values(conns).forEach(c=>{if(c.open)c.send(m)})}
+function dnSend(to,m){if(mqMode=="relay"){if(ws&&ws.readyState==1)ws.send(JSON.stringify({op:"dn",to:to||null,m}));return}mqPub("sgeo7/"+code+(to?"/dn/"+to:"/dn"),m)}
+function broadcast(m){if((mqMode=="broker"||mqMode=="relay")&&isHost){dnSend(null,m);return}Object.values(conns).forEach(c=>{if(c.open)c.send(m)})}
 function emit(m){if(isHost&&["lobby","prep","round","go","rev"].includes(m.t)){m.psid=sidC;m.sid=++sidC;if(m.t=="lobby"||m.t=="prep")stateLog=[];stateLog.push(m)}broadcast(m);handle(m)}
 function createRoom(){isHost=true;const nm=getName();hmsg("Создаём комнату…");
 const tryCode=()=>{code=genCode();peer=new Peer("sgeo-"+code,PCFG);
@@ -186,8 +187,8 @@ emit({t:"players",players,done:Object.keys(G.guesses||{})});
 if(phase=="load")checkReady();if(phase=="play"&&players.length&&allDone())reveal()}
 const allDone=()=>players.every(p=>G.guesses[p.id]);
 function onGuess(id,lat,lng,text){if(phase!="play"||G.guesses[id]||!players.some(p=>p.id==id))return;if(G.type=="fill"){if(typeof text!="string"||!text.trim())return;G.guesses[id]=text.trim().slice(0,60)}else{if(typeof lat!="number"||typeof lng!="number")return;G.guesses[id]=[lat,lng]}emit({t:"prog",done:Object.keys(G.guesses)});if(allDone())reveal()}
-function startGame(){const E=["song","origin","photo","book","fill","athlete","game"].filter((x,i)=>$("t"+(i+1)).checked);if(!E.length)E.push("song");const R=Math.max(1,Math.min(50,Math.round(+$("rounds").value)||5)),p=[];for(let i=0;i<R;i++)p.push(E[Math.floor(Math.random()*E.length)]);if(R>1&&E.length>1&&new Set(p).size==p.length)p[R-1]=p[0];
-G={R,timer:(tv=>tv===""?90:Math.max(0,Math.min(600,Math.round(+tv)||0)))($("timer").value.trim()),rnd:-1,plan:p,pool:S.filter(x=>!dead[sk(x)]).sort(()=>Math.random()-.5),ap:[],bp:[],sp:[],gp:[],hints:{},guesses:{}};players.forEach(x=>x.total=0);nextRound()}
+function startGame(){const E=["song","origin","photo","book","fill","athlete","game"].filter((x,i)=>$("t"+(i+1)).checked);if(!E.length)E.push("song");const R=Math.max(1,Math.min(50,Math.round(+$("rounds").value)||10)),p=[];for(let i=0;i<R;i++)p.push(E[Math.floor(Math.random()*E.length)]);if(R>1&&E.length>1&&new Set(p).size==p.length)p[R-1]=p[0];
+G={R,timer:(tv=>tv===""?60:Math.max(0,Math.min(600,Math.round(+tv)||0)))($("timer").value.trim()),rnd:-1,plan:p,pool:S.filter(x=>!dead[sk(x)]).sort(()=>Math.random()-.5),ap:[],bp:[],sp:[],gp:[],hints:{},guesses:{}};players.forEach(x=>x.total=0);nextRound()}
 function nextRound(){G.rnd++;G.guesses={};G.hints={};G.type=G.plan[G.rnd];phase="prep";emit({t:"prep",n:G.rnd+1,R:G.R,players,q:G.type});({song:pick,origin:pickA,photo:pickA,book:pickB,fill:pickF,athlete:pickW,game:pickW}[G.type])(0)}
 function retryUI(fn){emit({t:"prep",n:G.rnd+1,R:G.R,players,note:"Не удаётся связаться с iTunes. Хост, проверьте интернет и нажмите «Повторить»."});const n=$("next");n.hidden=false;n.textContent="↻ Повторить";n.onclick=()=>{n.hidden=true;emit({t:"prep",n:G.rnd+1,R:G.R,players});fn(0)}}
 function startRound(url,img,fb,blank){phase="load";G.ready={};emit({t:"round",n:G.rnd+1,R:G.R,url,img,fb,blank,q:G.type,timer:G.timer,players});clearTimeout(G.lt);G.lt=setTimeout(goRound,15000);checkReady()}
@@ -250,9 +251,9 @@ c.on("error",()=>{});mq.push(c)});
 setTimeout(()=>{if(!done)rej(new Error("брокеры недоступны"))},10000)})}
 function mqClose(){const o=mq;mq=[];o.forEach(c=>{try{c.end(true)}catch(e){}})}
 function mqPub(topic,m){m._i=rid();const t=JSON.stringify(m);mq.forEach(c=>{if(c.connected)c.publish(topic,t,{qos:1})})}
-function mkMq(id){const h={},c={peer:id,open:true,send(m){mqPub("sgeo7/"+code+"/dn/"+id,m)},close(){},on(ev,f){(h[ev]=h[ev]||[]).push(f)},_e(ev,a){(h[ev]||[]).forEach(f=>f(a))}};return c}
+function mkMq(id){const h={},c={peer:id,open:true,send(m){dnSend(id,m)},close(){},on(ev,f){(h[ev]=h[ev]||[]).push(f)},_e(ev,a){(h[ev]||[]).forEach(f=>f(a))}};return c}
 function brokerUp(m){const id=m.from;if(!id||!isHost)return;let c=conns[id];
-if(!c){if(m.t!="join"){if(m.t!="bye")mqPub("sgeo7/"+code+"/dn/"+id,{t:"err",msg:"Связь с комнатой потеряна. Войдите снова."});return}c=mkMq(id);hostConnection(c)}
+if(!c){if(m.t!="join"){if(m.t!="bye")dnSend(id,{t:"err",msg:"Связь с комнатой потеряна. Войдите снова."});return}c=mkMq(id);hostConnection(c)}
 if(m.t=="bye"){c._e("close");return}c._e("data",m)}
 async function createBroker(){isHost=true;const nm=getName();hmsg("Подключаемся к брокерам…");code=genCode(6);const base="sgeo7/"+code;
 try{await mqOpen([base+"/up"],{topic:base+"/dn",payload:JSON.stringify({t:"hostgone",_i:"w"+rid()}),qos:1},brokerUp)}catch(e){mqClose();return hmsg("Не удалось подключиться к брокерам ("+e.message+"). Нажмите «Проверить доступ к сервисам» ниже или выберите другой режим.")}
@@ -262,6 +263,14 @@ async function joinBroker(cd){isHost=false;const nm=getName();code=cd.toUpperCas
 try{await mqOpen([base+"/dn",base+"/dn/"+cid],{topic:base+"/up",payload:JSON.stringify({t:"bye",from:cid,_i:"w"+rid()}),qos:1},brokerDn)}catch(e){mqClose();return hmsg("Не удалось подключиться к брокерам ("+e.message+"). Нажмите «Проверить доступ к сервисам» ниже.")}
 mqMode="broker";mySid=-1;hostConn={open:true,send(m){m.from=cid;mqPub(base+"/up",m)},close(){try{mqPub(base+"/up",{t:"bye",from:cid})}catch(e){}}};
 let tries=0;const j=()=>{if(ui!="home"||mqMode!="broker")return;if(++tries>8){bye("Хост не отвечает. Проверьте код комнаты.");return}hostConn.send({t:"join",name:nm});setTimeout(j,2500)};hmsg("Входим в комнату…");j()}
+
+/* ---- режим через собственный сервер (start.bat + туннель) ---- */
+fetch("ping",{cache:"no-store"}).then(r=>r.text()).then(t=>{if(t=="sgeo-relay"){relayOk=true;hmsg("Сервер игры найден — можно создавать комнату.")}}).catch(()=>{});
+function wsOpen(onOpen,onMsg,onClose){const w=new WebSocket((location.protocol=="https:"?"wss://":"ws://")+location.host+"/ws");ws=w;w.onopen=()=>onOpen(w);w.onmessage=e=>{try{onMsg(JSON.parse(e.data))}catch(x){}};w.onclose=()=>{if(ws===w){ws=null;onClose()}};w.onerror=()=>{}}
+function createRelay(){isHost=true;const nm=getName();hmsg("Создаём комнату…");
+wsOpen(w=>w.send(JSON.stringify({op:"create"})),d=>{if(d.op=="created"){code=d.code;mqMode="relay";myId="H";players=[{id:"H",name:nm,color:0,total:0}];phase="lobby";emit({t:"lobby",code,players})}else if(d.op=="up"){d.m.from=d.from;brokerUp(d.m)}},()=>{if(ui!="home")bye("Связь с сервером игры потеряна.");else hmsg("Не удалось подключиться к серверу игры.")})}
+function joinRelay(cd){isHost=false;const nm=getName(),cid="c"+rid();myId=cid;code=cd.toUpperCase().trim();hmsg("Подключаемся…");
+wsOpen(w=>w.send(JSON.stringify({op:"join",code,id:cid})),d=>{if(d.op=="joined"){mqMode="relay";mySid=-1;hostConn={open:true,send(m){if(ws&&ws.readyState==1)ws.send(JSON.stringify({op:"up",m}))},close(){try{ws&&ws.close()}catch(e){}}};hostConn.send({t:"join",name:nm})}else if(d.op=="nojoin"){bye("Комната с таким кодом не найдена.")}else if(d.op=="dn")brokerDn(d.m)},()=>{if(ui!="home")bye("Связь с сервером игры потеряна.");else hmsg("Не удалось подключиться к серверу игры.")})}
 
 /* ---- интерфейс (одинаков у хоста и у игроков) ---- */
 function drawScores(){$("scores").innerHTML=players.map(p=>'<span class="sc" style="color:'+COL[p.color]+'">'+esc(p.name)+(p.id==myId?" (вы)":"")+": "+(p.total||0)+(canGuess&&answered.includes(p.id)?" ✓":"")+"</span>").join("")}
@@ -327,8 +336,8 @@ const ft=async x=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),7000
 const ws=(n,u,pr)=>new Promise(r=>{let w;const t=setTimeout(()=>{try{w.close()}catch(e){}r("❌ "+n)},7000);try{w=pr?new WebSocket(u,pr):new WebSocket(u);w.onopen=()=>{clearTimeout(t);try{w.close()}catch(e){}r("✅ "+n)};w.onerror=()=>{clearTimeout(t);r("❌ "+n)}}catch(e){clearTimeout(t);r("❌ "+n)}});
 const r=await Promise.all([...T.map(ft),ws("PeerJS: WebSocket (создание P2P-комнаты)","wss://0.peerjs.com/peerjs?key=peerjs&id=diag"+rid()+"&token=t"),...BR.map((u,i)=>ws("Брокер "+(i+1)+" ("+u.split("/")[2]+")",u,"mqtt"))]);o.innerHTML=r.join("<br>")}
 $("createM").onclick=createManual;$("joinM").onclick=joinManual;$("copyAns").onclick=()=>cp($("ansOut"));$("addP").onclick=newInvite;$("copyInv").onclick=()=>cp($("inv"));$("acc").onclick=acceptAnswer;$("diag").onclick=diag;
-$("create").onclick=createBroker;$("createP").onclick=createRoom;
-$("join").onclick=()=>{const c=$("code").value.trim();if(c.length==6)joinBroker(c);else if(c.length==4)joinRoom(c);else hmsg("Код комнаты — 6 символов (для P2P-комнат — 4).")};
+$("create").onclick=()=>relayOk?createRelay():createBroker();$("createP").onclick=createRoom;
+$("join").onclick=()=>{const c=$("code").value.trim();if(relayOk)joinRelay(c);else if(c.length==6)joinBroker(c);else if(c.length==4)joinRoom(c);else hmsg("Введите код комнаты.")};
 $("start").onclick=()=>{if(phase!="lobby")return;$("start").disabled=true;startGame()};
 $("leave").onclick=()=>cleanup();
 $("quit").onclick=()=>{if(confirm("Выйти из игры?"))cleanup()};
