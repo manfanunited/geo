@@ -4,37 +4,46 @@
 <title>Песня на карте — онлайн</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <style>
-html,body{margin:0;background:#f6f4ef;color:#1d1d1b;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+html,body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+body{min-height:100vh;background:linear-gradient(180deg,#9fd8ff 0%,#4f9df0 50%,#2756d1 100%) fixed;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.card,.sc,.msg,#qtxt,#blank,#edit,.inv,#timerBig,input,textarea,select{color:#1d1d1b;text-shadow:none}
 main{max-width:1100px;margin:0 auto;padding:14px}
 h1{font-size:20px;margin:0 0 8px}
 .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 .sc{background:#fff;border-radius:10px;padding:6px 12px;font-weight:600}
-button{font:inherit;background:#1d1d1b;color:#fff;border:0;border-radius:10px;padding:9px 16px;cursor:pointer}
+button{font:inherit;color:#fff;border:0;border-radius:10px;padding:9px 16px;cursor:pointer;text-shadow:none;background:linear-gradient(120deg,#0a3d24 0%,#14693d 35%,#0a3d24 70%,#1b8a50 100%);background-size:300% 100%;background-position:0 0;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:background-position .7s ease,filter .3s,transform .1s}
+button:hover:not(:disabled){background-position:100% 0;filter:brightness(1.15)}
+button:active:not(:disabled){transform:translateY(1px)}
 button:disabled{opacity:.5;cursor:default}
-button.alt{background:#fff;color:#1d1d1b;border:1px solid #ccc}
+button.alt{background:linear-gradient(120deg,#17503a 0%,#2a7d5b 35%,#17503a 70%,#35966c 100%);background-size:300% 100%;background-position:0 0;border:1px solid rgba(255,255,255,.35);color:#fff}
 .card{background:#fff;border-radius:12px;padding:16px;max-width:480px}
 input,select{font:inherit;padding:8px 10px;border:1px solid #ccc;border-radius:8px}
-#map{height:60vh;min-height:360px;border-radius:10px;background:#a9cde6;cursor:crosshair}
+#map{height:60vh;min-height:360px;border-radius:10px;background:#a9cde6;cursor:crosshair;border:3px solid silver;box-sizing:border-box;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 .leaflet-container{background:#a9cde6;font:inherit}
 .leaflet-container path:focus,.leaflet-interactive:focus{outline:none}
 .leaflet-tooltip.cap{background:none;border:0;box-shadow:none;font-size:11px;color:#222;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;padding:0}
 .leaflet-tooltip-right.cap:before{display:none}
 .cn{width:0;height:0}
 .cn span{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:11px;font-weight:600;letter-spacing:.04em;color:#4a4636;opacity:.85;text-shadow:0 0 3px #fff,0 0 3px #fff}
-.msg{margin:10px 0;min-height:44px;line-height:1.6}
+.msg{margin:10px 0;min-height:44px;line-height:1.6;background:rgba(255,255,255,.92);border-radius:12px;padding:10px 14px}
 #map.off{position:absolute;left:-99999px;width:100%;visibility:hidden}
-#timerBig{position:sticky;top:0;z-index:2000;display:flex;gap:30px;justify-content:center;align-items:center;font-size:clamp(26px,5.5vw,44px);font-weight:800;padding:4px 0;background:#f6f4ef;font-variant-numeric:tabular-nums}
+#timerBig{position:sticky;top:0;z-index:2000;display:flex;gap:30px;justify-content:center;align-items:center;font-size:clamp(26px,5.5vw,44px);font-weight:800;padding:4px 14px;background:rgba(255,255,255,.95);border-radius:0 0 14px 14px;box-shadow:0 3px 10px rgba(0,0,0,.25);font-variant-numeric:tabular-nums}
+#timerBig button{font-size:16px;font-weight:600}
 #tdig.hot{color:#d6402f;animation:blink 1s steps(2,start) infinite}
 #tck{color:#1a9c4b;font-size:1.4em;line-height:1}
 .inv{background:#f6f4ef;border-radius:10px;padding:10px;margin:10px 0}.inv textarea{font-size:12px}
 #edit{background:#fff;border-radius:10px;padding:10px 14px;margin:10px 0}#edit input{width:80px;font:inherit;padding:4px 6px}
 @keyframes blink{50%{opacity:.2}}
 #pwrap{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;justify-content:center;margin:0 auto 10px}#hinttxt{font-size:20px;font-weight:700;max-width:240px}
-#qtxt{font-size:clamp(20px,3.4vw,32px);font-weight:700;text-align:center;margin:12px 0}
+#qtxt{font-size:clamp(20px,3.4vw,32px);font-weight:700;text-align:center;margin:12px 0;background:rgba(255,255,255,.92);border-radius:14px;padding:10px 16px}
 #cbar{display:flex;justify-content:flex-end;margin-top:8px}
-#blank{text-align:center;margin:14px 0}#btitle{font-size:clamp(22px,4vw,38px);font-weight:700;margin-bottom:14px}#ans{font-size:20px;width:min(360px,90%);text-align:center}
+#blank{text-align:center;margin:14px 0;background:rgba(255,255,255,.92);border-radius:14px;padding:16px}#btitle{font-size:clamp(22px,4vw,38px);font-weight:700;margin-bottom:14px}#ans{font-size:20px;width:min(360px,90%);text-align:center}
 #lb{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;cursor:zoom-out}
 #lb img{max-width:96vw;max-height:96vh;object-fit:contain}
+#cd{position:fixed;inset:0;z-index:5000;background:linear-gradient(180deg,#0d3b7a 0%,#1f6fd8 60%,#4aa3ff 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;color:#fff}
+#cdc{width:min(46vw,260px);height:min(46vw,260px);border-radius:50%;border:10px solid #fff;display:flex;align-items:center;justify-content:center;font-size:min(26vw,150px);font-weight:800;animation:pop 1s ease-out infinite}
+@keyframes pop{0%{transform:scale(.7);opacity:.3}30%{transform:scale(1.06);opacity:1}100%{transform:scale(1)}}
+#cdt{font-size:24px;font-weight:700}
 [hidden]{display:none!important}
 </style></head><body><main>
 <div class="bar" style="justify-content:space-between;flex-wrap:nowrap"><h1 style="margin:0">🎵 Песня на карте — онлайн</h1><button id="quit" class="alt" hidden>Выйти из игры</button></div>
@@ -75,7 +84,7 @@ input,select{font:inherit;padding:8px 10px;border:1px solid #ccc;border-radius:8
 </section>
 
 <section id="game" hidden>
-<div id="timerBig" hidden><span id="tdig"></span><span id="tcnt"></span><span id="tck" hidden>✔</span></div>
+<div id="timerBig" hidden><span id="tdig"></span><span id="tcnt"></span><span id="tck" hidden>✔</span><button id="nextTop" hidden></button></div>
 <div class="bar" id="scores"></div>
 <div class="bar"><span id="rd"></span><span id="timerTxt"></span><span id="status"></span></div>
 <div class="bar" id="abar"><button id="play" disabled>Загрузка…</button><label>🔊 <input type="range" id="vol" min="0" max="100" value="70"></label></div>
@@ -90,6 +99,7 @@ input,select{font:inherit;padding:8px 10px;border:1px solid #ccc;border-radius:8
 <p style="font-size:12px;opacity:.7">Колёсико мыши — масштаб, перетаскивание — сдвиг. Поставьте точку (её можно передвинуть) и нажмите «Подтвердить ответ». Очки: 5000·e^(−расстояние/1500 км); за верное слово в вопросе без карты — 1500 очков.</p>
 </section>
 
+<div id="cd" hidden><div id="cdc"></div><div id="cdt"></div></div>
 <div id="lb" hidden><img id="lbi" alt=""></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -112,6 +122,9 @@ let isHost=false,peer=null,hostConn=null,conns={},players=[],code="",myId="",G={
 const au=new Audio();au.volume=.7;$("vol").oninput=function(){au.volume=this.value/100};
 const btn=$("play");let curQ="",manual=false,mcount=0,pend=null,hinted=false,plateOn=false,tN=null,cntA=0,cntT=0,revHtml="",revLast=false,inRev=false,mqMode="",mq=[],seen=new Set(),sidC=0,mySid=-1,stateLog=[],hbT=null,pendG=null,pendT=null,readySent=false,lastSync=0,ghosts={},jpc=null,invN=0,relayOk=false,ws=null;
 function plate(){const p=$("timerBig");if(!plateOn){p.hidden=true;return}p.hidden=false;const d=$("tdig");if(tN==null)d.hidden=true;else{d.hidden=false;d.textContent="⏱ "+Math.floor(tN/60)+":"+String(tN%60).padStart(2,"0");d.classList.toggle("hot",tN<=10)}$("tcnt").textContent=cntA+"/"+cntT;$("tck").hidden=!(cntT>0&&cntA==cntT)}
+let cdTok=0;
+function countdown(label){const o=$("cd"),id=++cdTok;o.hidden=false;$("cdt").textContent=label;let k=3;const tick=()=>{if(cdTok!==id)return;if(k<=0){o.hidden=true;return}const c=$("cdc");c.textContent=k;c.style.animation="none";void c.offsetWidth;c.style.animation="";k--;setTimeout(tick,1000)};tick()}
+function endCountdown(){cdTok++;$("cd").hidden=true}
 function whoAns(){$("whoans").textContent="Ответили: "+(players.filter(p=>answered.includes(p.id)).map(p=>p.name).join(", ")||"пока никто")+" ("+answered.length+"/"+players.length+")"}
 function reqSync(){const t=Date.now();if(t-lastSync<3000)return;lastSync=t;if(hostConn&&hostConn.open)try{hostConn.send({t:"sync"})}catch(e){}}
 function show(id){["home","lobby","game"].forEach(x=>$(x).hidden=x!=id);$("quit").hidden=id!="game";if(id=="game")map.invalidateSize()}
@@ -159,7 +172,7 @@ const pts=d=>Math.round(5000*Math.exp(-d/1500));
 /* ---- сеть ---- */
 function netErr(e){return e.type=="peer-unavailable"?"Комната с таким кодом не найдена.":(e.type=="server-error"||e.type=="socket-error"||e.type=="socket-closed")?"Нет связи со службой соединения PeerJS (0.peerjs.com): "+e.type+". Скорее всего, её блокирует сеть или провайдер (тогда помогает VPN), либо антивирус или расширение браузера. Попробуйте режим без сервера — раздел «Не создаётся комната?» ниже.":"Ошибка сети: "+e.type}
 function genCode(n){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i=0;i<(n||4);i++)s+=a[Math.floor(Math.random()*a.length)];return s}
-function cleanup(){const w0=ws;ws=null;try{hostConn&&hostConn.close()}catch(e){}if(mqMode=="broker"&&isHost){try{mqPub("sgeo7/"+code+"/dn",{t:"hostgone"})}catch(e){}}const oldMq=mq;mq=[];setTimeout(()=>oldMq.forEach(c=>{try{c.end(true)}catch(e){}}),500);clearInterval(hbT);clearInterval(pendT);clearTimeout(G.lt);pendG=null;mqMode="";sidC=0;mySid=-1;stateLog=[];try{w0&&w0.close()}catch(e){}try{peer&&peer.destroy()}catch(e){}peer=null;if(G.iv)clearInterval(G.iv);G={};Object.values(conns).forEach(c=>{try{c.close()}catch(e){}});try{hostConn&&hostConn.close()}catch(e){}conns={};hostConn=null;manual=false;pend=null;$("invs").innerHTML="";$("ansbox").hidden=true;try{jpc&&jpc.close()}catch(e){}jpc=null;ghosts={};players=[];phase="home";ui="home";canGuess=false;au.pause();au.removeAttribute("src");layer.clearLayers();show("home")}
+function cleanup(){const w0=ws;ws=null;try{hostConn&&hostConn.close()}catch(e){}if(mqMode=="broker"&&isHost){try{mqPub("sgeo7/"+code+"/dn",{t:"hostgone"})}catch(e){}}const oldMq=mq;mq=[];setTimeout(()=>oldMq.forEach(c=>{try{c.end(true)}catch(e){}}),500);clearInterval(hbT);clearInterval(pendT);clearTimeout(G.lt);pendG=null;mqMode="";sidC=0;mySid=-1;stateLog=[];try{w0&&w0.close()}catch(e){}try{peer&&peer.destroy()}catch(e){}peer=null;if(G.iv)clearInterval(G.iv);G={};Object.values(conns).forEach(c=>{try{c.close()}catch(e){}});try{hostConn&&hostConn.close()}catch(e){}conns={};hostConn=null;manual=false;pend=null;$("invs").innerHTML="";$("ansbox").hidden=true;try{jpc&&jpc.close()}catch(e){}jpc=null;ghosts={};players=[];phase="home";ui="home";canGuess=false;endCountdown();$("nextTop").hidden=true;au.pause();au.removeAttribute("src");layer.clearLayers();show("home")}
 function bye(t){cleanup();hmsg(t)}
 function dnSend(to,m){if(mqMode=="relay"){if(ws&&ws.readyState==1)ws.send(JSON.stringify({op:"dn",to:to||null,m}));return}mqPub("sgeo7/"+code+(to?"/dn/"+to:"/dn"),m)}
 function broadcast(m){if((mqMode=="broker"||mqMode=="relay")&&isHost){dnSend(null,m);return}Object.values(conns).forEach(c=>{if(c.open)c.send(m)})}
@@ -193,8 +206,9 @@ function startGame(){const E=["song","origin","photo","book","fill","athlete","g
 G={R,timer:(tv=>tv===""?60:Math.max(0,Math.min(600,Math.round(+tv)||0)))($("timer").value.trim()),rnd:-1,plan:p,pool:S.filter(x=>!dead[sk(x)]).sort(()=>Math.random()-.5),ap:[],bp:[],sp:[],gp:[],hints:{},guesses:{}};players.forEach(x=>x.total=0);nextRound()}
 function nextRound(){G.rnd++;G.guesses={};G.hints={};G.type=G.plan[G.rnd];phase="prep";emit({t:"prep",n:G.rnd+1,R:G.R,players,q:G.type});({song:pick,origin:pickA,photo:pickA,book:pickB,fill:pickF,athlete:pickW,game:pickW}[G.type])(0)}
 function retryUI(fn){emit({t:"prep",n:G.rnd+1,R:G.R,players,note:"Не удаётся связаться с iTunes. Хост, проверьте интернет и нажмите «Повторить»."});const n=$("next");n.hidden=false;n.textContent="↻ Повторить";n.onclick=()=>{n.hidden=true;emit({t:"prep",n:G.rnd+1,R:G.R,players});fn(0)}}
-function startRound(url,img,fb,blank){phase="load";G.ready={};emit({t:"round",n:G.rnd+1,R:G.R,url,img,fb,blank,q:G.type,timer:G.timer,players});clearTimeout(G.lt);G.lt=setTimeout(goRound,15000);checkReady()}
-function checkReady(){if(phase!="load")return;emit({t:"loadprog",n:Object.keys(G.ready).length,total:players.length});if(players.length&&players.every(p=>G.ready[p.id]))goRound()}
+function startRound(url,img,fb,blank){phase="load";G.ready={};G.t0=Date.now();G.gs=0;emit({t:"round",n:G.rnd+1,R:G.R,url,img,fb,blank,q:G.type,timer:G.timer,players});clearTimeout(G.lt);G.lt=setTimeout(goRound,15000);checkReady()}
+function checkReady(){if(phase!="load")return;emit({t:"loadprog",n:Object.keys(G.ready).length,total:players.length});if(players.length&&players.every(p=>G.ready[p.id]))goSoon()}
+function goSoon(){if(phase!="load"||G.gs)return;G.gs=1;setTimeout(()=>{G.gs=0;goRound()},Math.max(0,3300-(Date.now()-G.t0)))}
 function goRound(){if(phase!="load")return;clearTimeout(G.lt);phase="play";G.left=G.timer;emit({t:"go",timer:G.timer});if(G.timer>0){clearInterval(G.iv);G.iv=setInterval(()=>{G.left--;emit({t:"tick",left:G.left});if(G.left<=0){clearInterval(G.iv);setTimeout(reveal,2000)}},1000)}}
 function pick(errs){const t=++tok;if(!G.pool.length){phase="lobby";emit({t:"lobby",code,players});emit({t:"msg",text:"Закончились доступные песни."});return}const s=G.pool.pop();
 look(s,r=>{if(t!=tok||phase!="prep")return;if(r==="err"){G.pool.push(s);if(errs>=3)return retryUI(pick);setTimeout(()=>pick(errs+1),1500);return}if(r===null){markDead(s);pick(errs);return}G.song=s;startRound(r)})}
@@ -278,12 +292,12 @@ wsOpen(w=>w.send(JSON.stringify({op:"join",code,id:cid})),d=>{if(d.op=="joined")
 function drawScores(){$("scores").innerHTML=players.map(p=>'<span class="sc" style="color:'+COL[p.color]+'">'+esc(p.name)+(p.id==myId?" (вы)":"")+": "+(p.total||0)+(canGuess&&answered.includes(p.id)?" ✓":"")+"</span>").join("")}
 function showLobby(){ui="lobby";show("lobby");$("rc").textContent=code;$("plist").innerHTML=players.map(p=>'<span class="sc" style="color:'+COL[p.color]+'">'+esc(p.name)+(p.id==myId?" (вы)":"")+(p.total?" — "+p.total:"")+"</span>").join("");$("manual").hidden=!(isHost&&manual);$("copy").hidden=manual;$("hostopts").hidden=!isHost;$("wait").hidden=isHost;$("start").disabled=false}
 function handle(m){if(m.sid!=null&&!isHost){if(!(m.t=="lobby"||m.t=="prep")&&mySid!=-1&&m.psid!=mySid)reqSync();mySid=m.sid}switch(m.t){
-case"lobby":players=m.players;code=m.code||code;canGuess=false;inRev=false;plateOn=false;plate();au.pause();showLobby();break;
+case"lobby":players=m.players;code=m.code||code;canGuess=false;inRev=false;endCountdown();$("nextTop").hidden=true;plateOn=false;plate();au.pause();showLobby();break;
 case"players":players=m.players;answered=m.done||answered;cntT=players.length;if(inRev)refreshRev();else{plate();drawScores()}break;
 case"err":bye(m.msg);break;
 case"msg":alert(m.text);break;
-case"prep":ui="game";players=m.players;show("game");canGuess=false;confirmed=false;mine=null;tent=null;answered=[];layer.clearLayers();map.invalidateSize();map.setView([25,10],2);au.pause();au.removeAttribute("src");btn.disabled=true;btn.textContent="Загрузка…";$("confirm").disabled=true;$("confirm").textContent="Подтвердить ответ";$("next").hidden=true;$("rd").textContent="Раунд "+m.n+" из "+m.R;plateOn=false;plate();inRev=false;$("edit").hidden=true;$("force").hidden=true;clearInterval(pendT);pendG=null;au.oncanplay=null;au.onerror=null;$("photo").hidden=true;$("hintcol").hidden=true;$("qtxt").textContent="";$("abar").hidden=m.q?!["song","origin"].includes(m.q):false;$("blank").hidden=true;$("map").classList.remove("off");map.invalidateSize();$("cbar").appendChild($("confirm"));$("ans").value="";$("ans").disabled=false;curQ="";$("status").textContent="";$("msg").textContent=m.note||"Подбираем песню…";drawScores();break;
-case"round":{players=m.players;curQ=m.q;canGuess=false;inRev=false;$("force").hidden=!isHost;$("qtxt").textContent={song:"🎵 В песне поётся о каком-то месте. Где это?",origin:"🎤 Откуда родом исполнитель этой песни?",photo:"📷 Откуда родом исполнитель (группа) с фото?",book:"📚 Откуда родом автор этой книги?",fill:"📖 Вставьте пропущенное слово в названии книги",athlete:"🏅 Откуда родом этот спортсмен?",game:"🎮 Откуда разработчики этой игры?"}[m.q]||"";hinted=false;$("hintcol").hidden=m.q!="athlete";$("hint").hidden=false;$("hint").disabled=false;$("hinttxt").textContent="";if(m.q=="fill"){$("map").classList.add("off");$("fbtn").appendChild($("confirm"));$("blank").hidden=false;$("btitle").textContent=m.blank||"";whoAns()}
+case"prep":ui="game";players=m.players;show("game");canGuess=false;confirmed=false;mine=null;tent=null;answered=[];layer.clearLayers();map.invalidateSize();map.setView([25,10],2);au.pause();au.removeAttribute("src");btn.disabled=true;btn.textContent="Загрузка…";$("confirm").disabled=true;$("confirm").textContent="Подтвердить ответ";$("next").hidden=true;$("rd").textContent="Раунд "+m.n+" из "+m.R;plateOn=false;plate();endCountdown();$("nextTop").hidden=true;inRev=false;$("edit").hidden=true;$("force").hidden=true;clearInterval(pendT);pendG=null;au.oncanplay=null;au.onerror=null;$("photo").hidden=true;$("hintcol").hidden=true;$("qtxt").textContent="";$("abar").hidden=m.q?!["song","origin"].includes(m.q):false;$("blank").hidden=true;$("map").classList.remove("off");map.invalidateSize();$("cbar").appendChild($("confirm"));$("ans").value="";$("ans").disabled=false;curQ="";$("status").textContent="";$("msg").textContent=m.note||"Подбираем песню…";drawScores();break;
+case"round":{players=m.players;curQ=m.q;canGuess=false;inRev=false;$("force").hidden=!isHost;countdown("Раунд "+m.n+" из "+m.R);$("qtxt").textContent={song:"🎵 В песне поётся о каком-то месте. Где это?",origin:"🎤 Откуда родом исполнитель этой песни?",photo:"📷 Откуда родом исполнитель (группа) с фото?",book:"📚 Откуда родом автор этой книги?",fill:"📖 Вставьте пропущенное слово в названии книги",athlete:"🏅 Откуда родом этот спортсмен?",game:"🎮 Откуда разработчики этой игры?"}[m.q]||"";hinted=false;$("hintcol").hidden=m.q!="athlete";$("hint").hidden=false;$("hint").disabled=false;$("hinttxt").textContent="";if(m.q=="fill"){$("map").classList.add("off");$("fbtn").appendChild($("confirm"));$("blank").hidden=false;$("btitle").textContent=m.blank||"";$("ans").disabled=true;whoAns()}
 readySent=false;let need=0;const sendReady=()=>{if(readySent)return;readySent=true;$("status").textContent="";if(isHost){if(G.ready){G.ready["H"]=1;checkReady()}}else if(hostConn&&hostConn.open)hostConn.send({t:"ready"})},one=()=>{if(--need<=0)sendReady()};
 const im=$("photo");im.dataset.fb=m.fb||"";
 if(m.img){need++;im.onload=()=>one();im.onerror=()=>{if(im.dataset.fb&&im.src!=im.dataset.fb)im.src=im.dataset.fb;else{im.hidden=true;one()}};im.hidden=false;im.src=m.img}else{im.hidden=true;im.onload=null}
@@ -292,13 +306,13 @@ if(m.url){need++;btn.disabled=true;btn.textContent="Загрузка…";const f
 $("msg").textContent="Загружаем материалы…";$("status").textContent="Загрузка…";plateOn=true;tN=m.timer||null;cntA=0;cntT=players.length;plate();drawScores();
 if(!need)sendReady();else setTimeout(sendReady,12000);break}
 case"prog":answered=m.done;cntA=answered.length;cntT=players.length;plate();whoAns();drawScores();break;
-case"go":canGuess=true;tN=m.timer||null;plate();$("status").textContent="";$("msg").textContent=curQ=="fill"?"Введите пропущенное слово и нажмите «Подтвердить ответ».":(curQ=="song"||curQ=="origin"?"Нажмите «Старт», послушайте, п":"П")+"оставьте точку на карте и нажмите «Подтвердить ответ».";if(curQ=="fill")setTimeout(()=>$("ans").focus(),50);drawScores();break;case"loadprog":$("status").textContent=m.n<m.total?"Загрузили: "+m.n+" из "+m.total:"";break;case"ack":clearInterval(pendT);pendG=null;$("confirm").textContent="Ответ принят ✓";break;case"tick":tN=Math.max(0,m.left);plate();if(m.left<=0&&!confirmed&&canGuess)$("confirm").click();break;case"hintinfo":$("hinttxt").textContent=m.text;break;
+case"go":endCountdown();canGuess=true;if(curQ=="fill"&&!confirmed)$("ans").disabled=false;tN=m.timer||null;plate();$("status").textContent="";$("msg").textContent=curQ=="fill"?"Введите пропущенное слово и нажмите «Подтвердить ответ».":(curQ=="song"||curQ=="origin"?"Нажмите «Старт», послушайте, п":"П")+"оставьте точку на карте и нажмите «Подтвердить ответ».";if(curQ=="fill")setTimeout(()=>$("ans").focus(),50);drawScores();break;case"loadprog":$("status").textContent=m.n<m.total?"Загрузили: "+m.n+" из "+m.total:"";break;case"ack":clearInterval(pendT);pendG=null;$("confirm").textContent="Ответ принят ✓";break;case"tick":tN=Math.max(0,m.left);plate();if(m.left<=0&&!confirmed&&canGuess)$("confirm").click();break;case"hintinfo":$("hinttxt").textContent=m.text;break;
 case"rev":showRev(m);break}}
 function endTxt(){const mx=Math.max.apply(null,players.map(p=>p.total)),w=players.filter(p=>p.total==mx);return"<br><b>Итог: "+(players.length==1?"набрано "+mx+" очков":w.length>1?"ничья между "+w.map(who).join(", "):"победил(а) "+who(w[0]))+"!</b>"}
-function nextBtn(m){const n=$("next");if(isHost){n.hidden=false;n.textContent=m.last?"Вернуться в лобби":"Следующий раунд";n.onclick=hostNext}else{n.hidden=true;$("status").textContent="Ждём, пока хост продолжит…"}}
+function nextBtn(m){const n=$("next");if(isHost){n.hidden=false;n.textContent=m.last?"Вернуться в лобби":"Следующий раунд";n.onclick=hostNext;const t=$("nextTop");t.hidden=false;t.textContent=n.textContent;t.onclick=hostNext}else{n.hidden=true;$("status").textContent="Ждём, пока хост продолжит…"}}
 function refreshRev(){$("msg").innerHTML=revHtml+(revLast?endTxt():"");drawScores()}
 function drawEdit(){const e=$("edit");if(!isHost){e.hidden=true;return}e.hidden=false;e.innerHTML='<b>Править очки (хост)</b><div style="margin:8px 0">'+players.map((p,i)=>'<label style="display:inline-block;margin:4px 14px 4px 0">'+who(p)+' <input type="number" data-i="'+i+'" value="'+(p.total||0)+'"></label>').join("")+'</div><button id="applyE">Применить</button>';$("applyE").onclick=()=>{e.querySelectorAll("input").forEach(inp=>{const v=Math.round(+inp.value);if(Number.isFinite(v)&&players[+inp.dataset.i])players[+inp.dataset.i].total=v});emit({t:"players",players});$("applyE").textContent="Применено ✓";setTimeout(()=>{if($("applyE"))$("applyE").textContent="Применить"},1500)}}
-function showRev(m){inRev=true;clearInterval(pendT);pendG=null;$("force").hidden=true;canGuess=false;au.pause();btn.textContent="▶ Старт";players=m.players;answered=[];layer.clearLayers();tent=null;$("confirm").disabled=true;$("hintcol").hidden=true;$("status").textContent="";plateOn=true;tN=null;cntA=m.res.filter(r=>r.lat!=null||r.txt!=null).length;cntT=m.res.length;plate();
+function showRev(m){endCountdown();inRev=true;clearInterval(pendT);pendG=null;$("force").hidden=true;canGuess=false;au.pause();btn.textContent="▶ Старт";players=m.players;answered=[];layer.clearLayers();tent=null;$("confirm").disabled=true;$("hintcol").hidden=true;$("status").textContent="";plateOn=true;tN=null;cntA=m.res.filter(r=>r.lat!=null||r.txt!=null).length;cntT=m.res.length;plate();
 if(m.q=="fill"){$("btitle").textContent=m.song.title;$("ans").disabled=true;const rs=m.res.slice().sort((x,y)=>y.p-x.p);let h="<b>Правильно: "+esc(m.song.title)+"</b><br>"+rs.map(r=>who(r)+": "+(r.txt==null?"нет ответа":"«"+esc(r.txt)+"» "+(r.ok?"✓":"✗"))+", +"+r.p).join("<br>");revHtml=h;revLast=m.last;if(m.last)h+=endTxt();$("msg").innerHTML=h;drawScores();nextBtn(m);drawEdit();return}
 const b=[[m.song.lat,m.song.lng]];
 m.res.forEach(r=>{if(r.lat==null)return;L.polyline([[r.lat,r.lng],[m.song.lat,m.song.lng]],{pane:"guess",color:COL[r.color],weight:2,dashArray:"5 5"}).addTo(layer);mk(r.lat,r.lng,COL[r.color],7,r.name+": "+Math.round(r.d)+" км");b.push([r.lat,r.lng])});
@@ -322,8 +336,29 @@ $("photo").onclick=()=>{$("lbi").src=$("photo").src;$("lb").hidden=false};$("lb"
 /* ---- режим без сервера (ручной обмен кодами) ---- */
 const b64=u=>btoa(String.fromCharCode(...u)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""),unb64=t=>Uint8Array.from(atob(t.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0));
 const ck=t=>{let h=0;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))>>>0;return h.toString(36).padStart(6,"0").slice(-6)};
-async function enc(o){const j=new TextEncoder().encode(JSON.stringify(o));let p;if(window.CompressionStream){const cs=new CompressionStream("deflate-raw"),w=cs.writable.getWriter();w.write(j);w.close();p="1"+b64(new Uint8Array(await new Response(cs.readable).arrayBuffer()))}else p="0"+b64(j);return p+ck(p)}
-async function dec(t){t=t.replace(/[^A-Za-z0-9_-]/g,"");if(t.length<20)throw new Error("empty");const body=t.slice(0,-6);if(ck(body)!==t.slice(-6))throw new Error("checksum");let u=unb64(body.slice(1));if(body[0]=="1"){const ds=new DecompressionStream("deflate-raw"),w=ds.writable.getWriter();w.write(u);w.close();u=new Uint8Array(await new Response(ds.readable).arrayBuffer())}return JSON.parse(new TextDecoder().decode(u))}
+const P0={host:0,srflx:1,relay:2};
+function ip6b(a){const [h,t]=a.split("::"),hs=h?h.split(":"):[],ts=t?t.split(":"):[],parts=a.includes("::")?[...hs,...Array(Math.max(0,8-hs.length-ts.length)).fill("0"),...ts]:hs;if(parts.length!=8||parts.some(p=>!/^[0-9a-f]{0,4}$/i.test(p)))return null;const u=new Uint8Array(16);parts.forEach((p,i)=>{const v=parseInt(p||"0",16);u[2*i]=v>>8;u[2*i+1]=v&255});return u}
+const ip6s=u=>{const r=[];for(let i=0;i<16;i+=2)r.push(((u[i]<<8)|u[i+1]).toString(16));return r.join(":")};
+function pack(d){const sdp=d.sdp,g=r=>(sdp.match(r)||[])[1],uf=g(/a=ice-ufrag:(\S+)/),pw=g(/a=ice-pwd:(\S+)/),fp=g(/a=fingerprint:sha-256 ((?:[0-9A-Fa-f]{2}:){31}[0-9A-Fa-f]{2})/),st=g(/a=setup:(\w+)/),sc={actpass:0,active:1,passive:2}[st];
+if(!uf||!pw||!fp||sc===undefined||(sdp.match(/^m=/gm)||[]).length!=1||!/^m=application/m.test(sdp)||uf.length>255||pw.length>255||/[^\x20-\x7e]/.test(uf+pw))return null;
+const out=[(d.type=="answer"?4:0)|sc],push=a=>{for(const x of a)out.push(x)};out.push(uf.length);push([...uf].map(c=>c.charCodeAt(0)));out.push(pw.length);push([...pw].map(c=>c.charCodeAt(0)));push(fp.split(":").map(h=>parseInt(h,16)));
+const cs=[],re=/a=candidate:\S+ 1 udp \d+ (\S+) (\d+) typ (host|srflx|relay)/gi;let m;
+while((m=re.exec(sdp))){const addr=m[1],port=+m[2],typ=m[3].toLowerCase();let k=P0[typ],ab;
+if(/^\d+\.\d+\.\d+\.\d+$/.test(addr))ab=addr.split(".").map(Number);
+else if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.local$/i.test(addr)){k|=16;ab=Array.from(addr.slice(0,36).replace(/-/g,"").match(/../g),h=>parseInt(h,16))}
+else if(addr.includes(":")&&!/^fe80/i.test(addr)){const b=ip6b(addr);if(!b)continue;k|=8;ab=Array.from(b)}else continue;
+cs.push({k,ab,port,r:typ=="srflx"?0:typ=="relay"?1:(k&16?3:(k&8?2:2.5))})}
+cs.sort((a,b)=>a.r-b.r);const use=cs.slice(0,7);if(!use.length)return null;
+out.push(use.length);use.forEach(c=>{out.push(c.k);push(c.ab);out.push(c.port>>8,c.port&255)});return new Uint8Array(out)}
+function unpack(u){let i=0;const h=u[i++],type=h&4?"answer":"offer",st=["actpass","active","passive"][h&3],rs=n=>{const s=String.fromCharCode(...u.slice(i,i+n));i+=n;return s},uf=rs(u[i++]),pw=rs(u[i++]),fp=Array.from(u.slice(i,i+32),b=>b.toString(16).padStart(2,"0").toUpperCase()).join(":");i+=32;
+const n=u[i++],L=[];for(let c=0;c<n;c++){const k=u[i++],typ=["host","srflx","relay"][k&3];let addr;
+if(k&16){const x=Array.from(u.slice(i,i+16),b=>b.toString(16).padStart(2,"0")).join("");addr=[x.slice(0,8),x.slice(8,12),x.slice(12,16),x.slice(16,20),x.slice(20)].join("-")+".local";i+=16}
+else if(k&8){addr=ip6s(u.slice(i,i+16));i+=16}else{addr=Array.from(u.slice(i,i+4)).join(".");i+=4}
+const port=(u[i]<<8)|u[i+1];i+=2;const tp={host:126,srflx:100,relay:0}[typ];L.push("a=candidate:"+(c+1)+" 1 udp "+(tp*16777216+(65535-c*100)*256+255)+" "+addr+" "+port+" typ "+typ+(typ=="host"?"":" raddr 0.0.0.0 rport 0")+" generation 0")}
+return{type,sdp:["v=0","o=- 1 2 IN IP4 127.0.0.1","s=-","t=0 0","a=group:BUNDLE 0","a=msid-semantic: WMS","m=application 9 UDP/DTLS/SCTP webrtc-datachannel","c=IN IP4 0.0.0.0","a=ice-ufrag:"+uf,"a=ice-pwd:"+pw,"a=fingerprint:sha-256 "+fp,"a=setup:"+st,"a=mid:0","a=sctp-port:5000","a=max-message-size:262144",...L,"a=end-of-candidates"].join("\r\n")+"\r\n"}}
+async function enc(o){const pk=pack(o);if(pk){const p="2"+b64(pk);return p+ck(p)}return await encLegacy(o)}
+async function encLegacy(o){const j=new TextEncoder().encode(JSON.stringify(o));let p;if(window.CompressionStream){const cs=new CompressionStream("deflate-raw"),w=cs.writable.getWriter();w.write(j);w.close();p="1"+b64(new Uint8Array(await new Response(cs.readable).arrayBuffer()))}else p="0"+b64(j);return p+ck(p)}
+async function dec(t){t=t.replace(/[^A-Za-z0-9_-]/g,"");if(t.length<20)throw new Error("empty");const body=t.slice(0,-6);if(ck(body)!==t.slice(-6))throw new Error("checksum");if(body[0]=="2")return unpack(unb64(body.slice(1)));let u=unb64(body.slice(1));if(body[0]=="1"){const ds=new DecompressionStream("deflate-raw"),w=ds.writable.getWriter();w.write(u);w.close();u=new Uint8Array(await new Response(ds.readable).arrayBuffer())}return JSON.parse(new TextDecoder().decode(u))}
 const gather=pc=>new Promise(r=>{let d=false;const f=()=>{if(!d){d=true;clearTimeout(t);r()}},t=setTimeout(f,9000);pc.onicegatheringstatechange=()=>{if(pc.iceGatheringState=="complete")f()};if(pc.iceGatheringState=="complete")f()});
 const hasExt=sdp=>/typ (srflx|relay)/.test(sdp);
 function mkConn(id,dc,pc){const h={},c={peer:id,get open(){return dc.readyState=="open"},send(m){dc.send(JSON.stringify(m))},close(){try{pc.close()}catch(e){}},on(ev,f){(h[ev]=h[ev]||[]).push(f)},_e(ev,a){(h[ev]||[]).forEach(f=>f(a))}};dc.onmessage=e=>{try{c._e("data",JSON.parse(e.data))}catch(x){}};dc.onclose=()=>c._e("close");dc.onerror=()=>c._e("error");
